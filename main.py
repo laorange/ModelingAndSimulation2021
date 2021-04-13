@@ -15,12 +15,13 @@ STARTING_POINT_Y = 0
 STARTING_POINT_Z = 0
 
 # TODO: 终点位置 的 x,y,z坐标
-TERMINAL_POINT_X = 66  # 10  # 10  # 66  # 45  # 66  # 35  # 60
-TERMINAL_POINT_Y = 56  # 90  # 90  # 56  # 60  # 56  # 20  # 90
+TERMINAL_POINT_X = 80  # 10  # 10  # 66  # 45  # 66  # 35  # 60
+TERMINAL_POINT_Y = 80  # 90  # 90  # 56  # 60  # 56  # 20  # 90
 TERMINAL_POINT_Z = 80
 
 # TODO: 维度是否为3维
-IF_3D = False
+IF_3D = True
+
 if not IF_3D and STARTING_POINT_Z != TERMINAL_POINT_Z:
     TERMINAL_POINT_Z = STARTING_POINT_Z
     print("2维模式下，起点和终点的Z轴坐标必须相同，已自动将终点位置的z轴坐标设为与起点相同")
@@ -32,8 +33,9 @@ closed_points_lists = []
 obstacle_points = []
 
 # TODO: 是否已到达终点 (提示：可以先设置该项为True来查看障碍物的形状)
-REACH_THE_DESTINATION = False
+REACH_THE_DESTINATION = True
 if REACH_THE_DESTINATION:
+    print("当前为障碍物调试模式，如需开始计算请将REACH_THE_DESTINATION设为False")
     closed_points_lists.append([TERMINAL_POINT_X, TERMINAL_POINT_Y, TERMINAL_POINT_Z])
 
 
@@ -62,7 +64,9 @@ def this_point_is_an_obstacle(x: int, y: int, z: int):
     else:
         if y == 20 - x and z < 60:
             OBSTACLE = True
-        if y == 60 - x and 40 <= z <= 90:
+        if y == 60 - x and 70 <= z <= 90:
+            OBSTACLE = True
+        if x + y + z == 160 and 40 <= x <= 60 and 40 <= y <= 60 and 40 <= z <= 80:
             OBSTACLE = True
     return OBSTACLE
 
@@ -80,7 +84,8 @@ class Point:
 
         # h: 距离终点的Manhattan distance: h(n) = D ∗ (dx + dy + dz)
         if IF_3D:
-            self.h = int(abs(TERMINAL_POINT_X - self.x) + abs(TERMINAL_POINT_Y - self.y) + abs(TERMINAL_POINT_Z - self.z))
+            self.h = int(
+                abs(TERMINAL_POINT_X - self.x) + abs(TERMINAL_POINT_Y - self.y) + abs(TERMINAL_POINT_Z - self.z))
         else:
             self.h = int(abs(TERMINAL_POINT_X - self.x) + abs(TERMINAL_POINT_Y - self.y))
 
@@ -129,12 +134,10 @@ class OperationalPoint(Point):
     def move_x(self) -> Point:
         x_new = self.x + 1
         if x_new > LENGTH or x_new < 0:
-            # obstacle_points.append(Point(x_new, self.y, self.z))
             raise Exception(f"当前坐标：({x_new}, {self.y}, {self.z})，超出边界")
         else:
             g_new = self.g + 1
             if this_point_is_an_obstacle(x_new, self.y, self.z):
-                # obstacle_points.append(Point(x_new, self.y, self.z))
                 raise Exception(f"当前坐标：({x_new}, {self.y}, {self.z})，遇到障碍物")
             new_route = self.route[:]
             new_route.append([self.x, self.y, self.z])
@@ -143,12 +146,10 @@ class OperationalPoint(Point):
     def move_x_(self) -> Point:
         x_new = self.x - 1
         if x_new > LENGTH or x_new < 0:
-            # obstacle_points.append(Point(x_new, self.y, self.z))
             raise Exception(f"当前坐标：({x_new}, {self.y}, {self.z})，超出边界")
         else:
             g_new = self.g + 1
             if this_point_is_an_obstacle(x_new, self.y, self.z):
-                # obstacle_points.append(Point(x_new, self.y, self.z))
                 raise Exception(f"当前坐标：({x_new}, {self.y}, {self.z})，遇到障碍物")
             new_route = self.route[:]
             new_route.append([self.x, self.y, self.z])
@@ -157,12 +158,10 @@ class OperationalPoint(Point):
     def move_y(self) -> Point:
         y_new = self.y + 1
         if y_new > WIDTH or y_new < 0:
-            # obstacle_points.append(Point(self.x, y_new, self.z))
             raise Exception(f"当前坐标：({self.x}, {y_new}, {self.z})，超出边界")
         else:
             g_new = self.g + 1
             if this_point_is_an_obstacle(self.x, y_new, self.z):
-                # obstacle_points.append(Point(self.x, y_new, self.z))
                 raise Exception(f"当前坐标：({self.x}, {y_new}, {self.z})，遇到障碍物")
             new_route = self.route[:]
             new_route.append([self.x, self.y, self.z])
@@ -171,12 +170,10 @@ class OperationalPoint(Point):
     def move_y_(self) -> Point:
         y_new = self.y - 1
         if y_new > WIDTH or y_new < 0:
-            # obstacle_points.append(Point(self.x, y_new, self.z))
             raise Exception(f"当前坐标：({self.x}, {y_new}, {self.z})，超出边界")
         else:
             g_new = self.g + 1
             if this_point_is_an_obstacle(self.x, y_new, self.z):
-                # obstacle_points.append(Point(self.x, y_new, self.z))
                 raise Exception(f"当前坐标：({self.x}, {y_new}, {self.z})，遇到障碍物")
             new_route = self.route[:]
             new_route.append([self.x, self.y, self.z])
@@ -185,12 +182,10 @@ class OperationalPoint(Point):
     def move_z(self) -> Point:
         z_new = self.z + 1
         if z_new > HEIGHT or z_new < 0:
-            # obstacle_points.append(Point(self.x, self.y, z_new))
             raise Exception(f"当前坐标：({self.x}, {self.y}, {z_new})，超出边界")
         else:
             g_new = self.g + 1
             if this_point_is_an_obstacle(self.x, self.y, z_new):
-                # obstacle_points.append(Point(self.x, self.y, z_new))
                 raise Exception(f"当前坐标：({self.x}, {self.y}, {z_new})，遇到障碍物")
             new_route = self.route[:]
             new_route.append([self.x, self.y, self.z])
@@ -199,23 +194,19 @@ class OperationalPoint(Point):
     def move_z_(self) -> Point:
         z_new = self.z - 1
         if z_new > HEIGHT or z_new < 0:
-            # obstacle_points.append(Point(self.x, self.y, z_new))
             raise Exception(f"当前坐标：({self.x}, {self.y}, {z_new})，超出边界")
         else:
             g_new = self.g + 1
             if this_point_is_an_obstacle(self.x, self.y, z_new):
-                # obstacle_points.append(Point(self.x, self.y, z_new))
                 raise Exception(f"当前坐标：({self.x}, {self.y}, {z_new})，遇到障碍物")
             new_route = self.route[:]
             new_route.append([self.x, self.y, self.z])
             return Point(self.x, self.y, z_new, g=g_new, route=new_route)
 
     def iterate_one_time(self):
-        # print("当前选择了：" + str(self.to_list()) + "进行迭代")
         for method in self.iterate_funcs:
             try:
                 new_point = method()
-                # print("当前坐标：" + str(new_point.to_list()))
                 if new_point.to_list() not in computed_points_lists:
                     computed_points_lists.append(new_point.to_list())
                     computed_points.append(new_point)
@@ -269,7 +260,6 @@ def visualize(route_mode: bool = True):
     z_ls = []
     if not route_mode:
         for closed_point in closed_points_lists:
-            # t_ls.append(10 * closed_points_lists.index(closed_point) + 1000)
             t_ls.append(closed_points_lists.index(closed_point))
             x_ls.append(closed_point[0])
             y_ls.append(closed_point[1])

@@ -1,6 +1,8 @@
-# Modeling_and_Simulation2021
+Modeling_and_Simulation2021
 
-## 2021.4 建模与仿真 - 使用A*算法的最短路径优化设计
+# 使用A*算法的最短路径优化设计
+
+> 2021.4 建模与仿真
 
 **使用python实现**
 
@@ -8,76 +10,78 @@
 
 **开源授权协议: AGPL-3.0 License**
 
-示例中，
+## 2维情况
 
-+ 地图大小为 100 × 100 × 100
-+ 起点为 (10, 10, 10)
-+ 终点为 (80, 80, 80)
+(0, 0) → (80, 80) : 用时 43.73秒
 
-+ 障碍物设置为
+### 障碍物布局
 
 ```python
-    if y < x - 30 or z < y - 30 or x < z - 30:
-        print("这是障碍物")
+if x > 10 and y == 50 - x:
+    OBSTACLE = True
+if x < 50 and y == 60 - x:
+    OBSTACLE = True
+if x > 40 and y == 70 - x:
+    OBSTACLE = True
+if x == 50 and y > 40:
+    OBSTACLE = True
+if x == 40 and 30 <= y < 80:
+    OBSTACLE = True
+if 60 <= x <= 70 and y == 120 - x:
+    OBSTACLE = True
+if 50 <= x <= 70 and y == 140 - x:
+    OBSTACLE = True
+if x == 70 and 50 <= y <= 70:
+    OBSTACLE = True
 ```
 
-+ 效果图：
+![image-20210413152325940](README_image/image-20210413152325940.png)
 
-![image-20210412164707624](README_image/image-20210412164707624.png)
+### 路径图
 
-![image-20210412164923482](README_image/image-20210412164923482.png)
+![image-20210413152449797](README_image/image-20210413152449797.png)
 
-![image-20210412164954589](README_image/image-20210412164954589.png)
+![image-20210413152646004](README_image/image-20210413152646004.png)
 
-> 以上图片为浏览器打开demo.html的截图
+### 迭代过程图
 
-------
+![image-20210413152801304](README_image/image-20210413152801304.png)
 
-4.13晚 更新
+![image-20210413152855198](README_image/image-20210413152855198.png)
 
-新增功能：2D/3D选择，路径模式/扫描模式
+## 3维情况
 
-已解决：死胡同会卡死的bug
+(0, 0, 0) → (80, 80, 80) : 用时 570.03秒
 
-未解决：死胡同拐出处并非最短路径的问题
+### 障碍物布局
 
-![image-20210413000012195](README_image/image-20210413000012195.png)
-
-![image-20210413000044766](README_image/image-20210413000044766.png)
-
------
-
-4.14 更新：
-
-已解决：死胡同拐出处并非最短路径的问题
-
-新增：时间统计 & 进度显示
-
-
-
-+ (0, 0) → (10, 90) : 用时40.92秒
-
-![image-20210413090934882](README_image/image-20210413090934882.png)
-
-+ (0, 0) → (45, 60) : 用时125.33秒
-
-![image-20210413092642740](README_image/image-20210413092642740.png)
-
-```
-self.f = 0.99 * self.g + self.h
-
-用时: 126.51秒
+```python
+if y == 20 - x and z < 60:
+    OBSTACLE = True
+if y == 60 - x and 70 <= z <= 90:
+    OBSTACLE = True
+if x + y + z == 160 and 40 <= x <= 60 and 40 <= y <= 60 and 40 <= z <= 80:
+    OBSTACLE = True
 ```
 
-+ (0, 0) → (66, 56) : 用时612.42秒
+![image-20210413153548200](README_image/image-20210413153548200.png)
 
-![image-20210413094518887](README_image/image-20210413094518887.png)
+![image-20210413154016518](README_image/image-20210413154016518.png)
 
-------
+### 路径图
 
-修复问题：初始点未加入到closed_points和computed_points中
+![image-20210413154320967](README_image/image-20210413154320967.png)
 
-计算速度极大提升(原因不详)
+![image-20210413154459927](README_image/image-20210413154459927.png)
 
-上图10分钟出的结果，仅用了28.95秒
+![image-20210413154609073](README_image/image-20210413154609073.png)
 
+### 迭代过程图
+
+![image-20210413154733328](README_image/image-20210413154733328.png)
+
+![image-20210413154750230](README_image/image-20210413154750230.png)
+
+![image-20210413154854911](README_image/image-20210413154854911.png)
+
+![image-20210413155013934](README_image/image-20210413155013934.png)
