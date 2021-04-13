@@ -5,6 +5,12 @@ import pandas as pd
 import plotly
 import plotly.express as px
 
+# TODO: 维度是否为3维
+IF_3D = False
+
+# TODO: 是否可以沿对角线方向移动 (请注意：2d情况下, 与x,y轴不平行的单线障碍物会被穿过)
+OBLIQUE = False
+
 # TODO: 地图大小
 LENGTH = 100
 WIDTH = 100
@@ -19,9 +25,6 @@ STARTING_POINT_Z = 0
 TERMINAL_POINT_X = 80  # 10  # 10  # 66  # 45  # 66  # 35  # 60
 TERMINAL_POINT_Y = 80  # 90  # 90  # 56  # 60  # 56  # 20  # 90
 TERMINAL_POINT_Z = 80
-
-# TODO: 维度是否为3维
-IF_3D = True
 
 if not IF_3D and STARTING_POINT_Z != TERMINAL_POINT_Z:
     TERMINAL_POINT_Z = STARTING_POINT_Z
@@ -116,12 +119,29 @@ def record_all_obstacle_on_the_map():
 
 
 class OperationalPoint(Point):
-    def move(self, axis: str, forward: bool = True):
+    def move(self, axis: str):
         try:
-            change = 1 if forward else -1
-            x_new = self.x + change if axis == "x" else self.x
-            y_new = self.y + change if axis == "y" else self.y
-            z_new = self.z + change if axis == "z" else self.z
+            if "x" in axis:
+                change = 1
+                if "-x" in axis:
+                    change = -1
+                x_new = self.x + change
+            else:
+                x_new = self.x
+            if "y" in axis:
+                change = 1
+                if "-y" in axis:
+                    change = -1
+                y_new = self.y + change
+            else:
+                y_new = self.y
+            if "z" in axis:
+                change = 1
+                if "-z" in axis:
+                    change = -1
+                z_new = self.z + change
+            else:
+                z_new = self.z
             if x_new > LENGTH or x_new < 0 or y_new > WIDTH or y_new < 0 or z_new > HEIGHT or z_new < 0:
                 raise Exception(f"当前坐标：({x_new}, {y_new}, {z_new})，超出边界")
             else:
@@ -144,48 +164,55 @@ class OperationalPoint(Point):
     def iterate_one_time(self):
         threads = []
         if IF_3D:
-            axis_list = ["x", "y", "z"]
+            axis_list = ["x", "y", "z", "-x", "-y", "-z"]
+            if OBLIQUE:
+                axis_list = ["x", "y", "z", "-x", "-y", "-z", 'xy', 'xz', 'yz', '-xy',
+                             '-xz', '-yz', 'x-y', 'x-z', 'y-z', '-x-y', '-x-z', '-y-z',
+                             "xyz", "-xyz", "x-yz", "xy-z", "-x-yz", "-xy-z", "x-y-z", "-x-y-z"]
         else:
-            axis_list = ["x", "y"]
+            axis_list = ["x", "y", "-x", "-y"]
+            if OBLIQUE:
+                axis_list = ["x", "y", "-x", "-y", 'xy', '-xy', 'x-y', '-x-y']
         for axis in axis_list:
-            for forward in [True, False]:
-                task = Thread(target=self.move, args=[axis, forward])
-                threads.append(task)
-                task.start()
+            task = Thread(target=self.move, args=[axis])
+            threads.append(task)
+            task.start()
         threads[-1].join()
 
 
 def determine_best_point():
     global REACH_THE_DESTINATION
     if computed_points:
-        best_point = None
+        temp_best_point = None
         ALL_CLOSED = True
         for computed_point in computed_points:
             if not computed_point.close:
                 ALL_CLOSED = False
-                if best_point is None:
-                    best_point = computed_point
+                if temp_best_point is None:
+                    temp_best_point = computed_point
                 else:
                     if computed_point.to_list() not in closed_points_lists:
-                        if computed_point.f < best_point.f:
-                            best_point = computed_point
-                        elif computed_point.f == best_point.f:
-                            if computed_point.h < best_point.h:
-                                best_point = computed_point
-                            elif computed_point.h == best_point.h:
-                                if random.randint(0, 1):  # 此处引入随机数，如果h和f均相等，由随机数决定是否为best_point
-                                    best_point = computed_point
+                        if computed_point.f < temp_best_point.f:
+                            temp_best_point = computed_point
+                        elif computed_point.f == temp_best_point.f:
+                            if computed_point.h < temp_best_point.h:
+                                temp_best_point = computed_point
+                            elif computed_point.h == temp_best_point.h:
+                                if random.randint(0, 1):  # 此处引入随机数，如果h和f均相等，由随机数决定是否为temp_best_point
+                                    temp_best_point = computed_point
         if ALL_CLOSED:
             REACH_THE_DESTINATION = True
             print("未到达终点，但已遍历所有情况")
             return computed_points[0]
-        if best_point.x == TERMINAL_POINT_X and best_point.y == TERMINAL_POINT_Y and best_point.z == TERMINAL_POINT_Z:
-            REACH_THE_DESTINATION = True  # 到达终点
-        if best_point.to_list() not in closed_points_lists:
+        if temp_best_point.x == TERMINAL_POINT_X:
+            if temp_best_point.y == TERMINAL_POINT_Y:
+                if temp_best_point.z == TERMINAL_POINT_Z:
+                    REACH_THE_DESTINATION = True  # 到达终点
+        if temp_best_point.to_list() not in closed_points_lists:
             if not REACH_THE_DESTINATION:
-                closed_points_lists.append(best_point.to_list())
-                computed_points[computed_points.index(best_point)].be_closed()
-        return best_point
+                closed_points_lists.append(temp_best_point.to_list())
+                computed_points[computed_points.index(temp_best_point)].be_closed()
+        return temp_best_point
 
 
 # 使用plotly进行可视化
@@ -201,17 +228,17 @@ def visualize(route_mode: bool = True):
             y_ls.append(closed_point[1])
             z_ls.append(closed_point[2])
     else:
-        best_point = determine_best_point()
-        routes = best_point.route
+        last_best_point = determine_best_point()
+        routes = last_best_point.route
         for i in range(len(routes)):
             t_ls.append(i)
             x_ls.append(routes[i][0])
             y_ls.append(routes[i][1])
             z_ls.append(routes[i][2])
         t_ls.append(len(routes))
-        x_ls.append(best_point.x)
-        y_ls.append(best_point.y)
-        z_ls.append(best_point.z)
+        x_ls.append(last_best_point.x)
+        y_ls.append(last_best_point.y)
+        z_ls.append(last_best_point.z)
     # 画计算到的点，调试用
     # for computed_point in computed_points:
     #     if computed_point.to_list() not in closed_points_lists:
@@ -238,7 +265,6 @@ if __name__ == '__main__':
     record_all_obstacle_on_the_map()
 
     starting_point = OperationalPoint(STARTING_POINT_X, STARTING_POINT_Y, STARTING_POINT_Z)
-    initial_h = starting_point.h
     starting_point.be_closed()
     computed_points_lists.append(starting_point.to_list())
     computed_points.append(starting_point)
