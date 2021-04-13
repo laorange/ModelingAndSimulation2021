@@ -1,5 +1,6 @@
 from time import perf_counter
 import random
+from threading import Thread
 import pandas as pd
 import plotly
 import plotly.express as px
@@ -33,7 +34,7 @@ closed_points_lists = []
 obstacle_points = []
 
 # TODO: 是否已到达终点 (提示：可以先设置该项为True来查看障碍物的形状)
-REACH_THE_DESTINATION = True
+REACH_THE_DESTINATION = False
 if REACH_THE_DESTINATION:
     print("当前为障碍物调试模式，如需开始计算请将REACH_THE_DESTINATION设为False")
     closed_points_lists.append([TERMINAL_POINT_X, TERMINAL_POINT_Y, TERMINAL_POINT_Z])
@@ -73,33 +74,24 @@ def this_point_is_an_obstacle(x: int, y: int, z: int):
 
 class Point:
     def __init__(self, x: int, y: int, z: int, g: int = 0, route=None, t: int = 0):
-        if route is None:
-            route = []
         self.x = x
         self.y = y
         self.z = z
-
-        # g: 步数
-        self.g = g
+        self.g = g  # g: 步数
 
         # h: 距离终点的Manhattan distance: h(n) = D ∗ (dx + dy + dz)
         if IF_3D:
-            self.h = int(
-                abs(TERMINAL_POINT_X - self.x) + abs(TERMINAL_POINT_Y - self.y) + abs(TERMINAL_POINT_Z - self.z))
+            self.h = abs(TERMINAL_POINT_X - self.x) + abs(TERMINAL_POINT_Y - self.y) + abs(TERMINAL_POINT_Z - self.z)
         else:
             self.h = int(abs(TERMINAL_POINT_X - self.x) + abs(TERMINAL_POINT_Y - self.y))
 
-        # f: f = g + h
         self.f = self.g + self.h
 
-        # t: 默认值为g, 数值越大颜色越鲜艳
-        self.t = g if t == 0 else t
+        self.t = g if t == 0 else t  # t: 默认值为g, 数值越大颜色越鲜艳
 
-        # 到该点的路径
-        self.route = route if route is not None else []
+        self.route = route if route is not None else []  # 从终点到该点的路径
 
-        # 是否close
-        self.close = False
+        self.close = False  # 是否close
 
     def to_list(self):
         return [self.x, self.y, self.z]
@@ -108,7 +100,7 @@ class Point:
         self.close = True
 
 
-# 以面来表示障碍物，点过多可能会导致图像加载失败
+# 在图中画出障碍物(点过多可能会导致图像加载失败)
 def record_all_obstacle_on_the_map():
     global obstacle_points
     for x in range(LENGTH):
@@ -124,89 +116,21 @@ def record_all_obstacle_on_the_map():
 
 
 class OperationalPoint(Point):
-    def __init__(self, x: int, y: int, z: int, g: int = 0, route=None, t: int = 0):
-        super(OperationalPoint, self).__init__(x, y, z, g, route, t)
-        if IF_3D:
-            self.iterate_funcs = [self.move_x, self.move_x_, self.move_y, self.move_y_, self.move_z, self.move_z_]
-        else:
-            self.iterate_funcs = [self.move_x, self.move_x_, self.move_y, self.move_y_]
-
-    def move_x(self) -> Point:
-        x_new = self.x + 1
-        if x_new > LENGTH or x_new < 0:
-            raise Exception(f"当前坐标：({x_new}, {self.y}, {self.z})，超出边界")
-        else:
-            g_new = self.g + 1
-            if this_point_is_an_obstacle(x_new, self.y, self.z):
-                raise Exception(f"当前坐标：({x_new}, {self.y}, {self.z})，遇到障碍物")
-            new_route = self.route[:]
-            new_route.append([self.x, self.y, self.z])
-            return Point(x_new, self.y, self.z, g=g_new, route=new_route)
-
-    def move_x_(self) -> Point:
-        x_new = self.x - 1
-        if x_new > LENGTH or x_new < 0:
-            raise Exception(f"当前坐标：({x_new}, {self.y}, {self.z})，超出边界")
-        else:
-            g_new = self.g + 1
-            if this_point_is_an_obstacle(x_new, self.y, self.z):
-                raise Exception(f"当前坐标：({x_new}, {self.y}, {self.z})，遇到障碍物")
-            new_route = self.route[:]
-            new_route.append([self.x, self.y, self.z])
-            return Point(x_new, self.y, self.z, g=g_new, route=new_route)
-
-    def move_y(self) -> Point:
-        y_new = self.y + 1
-        if y_new > WIDTH or y_new < 0:
-            raise Exception(f"当前坐标：({self.x}, {y_new}, {self.z})，超出边界")
-        else:
-            g_new = self.g + 1
-            if this_point_is_an_obstacle(self.x, y_new, self.z):
-                raise Exception(f"当前坐标：({self.x}, {y_new}, {self.z})，遇到障碍物")
-            new_route = self.route[:]
-            new_route.append([self.x, self.y, self.z])
-            return Point(self.x, y_new, self.z, g=g_new, route=new_route)
-
-    def move_y_(self) -> Point:
-        y_new = self.y - 1
-        if y_new > WIDTH or y_new < 0:
-            raise Exception(f"当前坐标：({self.x}, {y_new}, {self.z})，超出边界")
-        else:
-            g_new = self.g + 1
-            if this_point_is_an_obstacle(self.x, y_new, self.z):
-                raise Exception(f"当前坐标：({self.x}, {y_new}, {self.z})，遇到障碍物")
-            new_route = self.route[:]
-            new_route.append([self.x, self.y, self.z])
-            return Point(self.x, y_new, self.z, g=g_new, route=new_route)
-
-    def move_z(self) -> Point:
-        z_new = self.z + 1
-        if z_new > HEIGHT or z_new < 0:
-            raise Exception(f"当前坐标：({self.x}, {self.y}, {z_new})，超出边界")
-        else:
-            g_new = self.g + 1
-            if this_point_is_an_obstacle(self.x, self.y, z_new):
-                raise Exception(f"当前坐标：({self.x}, {self.y}, {z_new})，遇到障碍物")
-            new_route = self.route[:]
-            new_route.append([self.x, self.y, self.z])
-            return Point(self.x, self.y, z_new, g=g_new, route=new_route)
-
-    def move_z_(self) -> Point:
-        z_new = self.z - 1
-        if z_new > HEIGHT or z_new < 0:
-            raise Exception(f"当前坐标：({self.x}, {self.y}, {z_new})，超出边界")
-        else:
-            g_new = self.g + 1
-            if this_point_is_an_obstacle(self.x, self.y, z_new):
-                raise Exception(f"当前坐标：({self.x}, {self.y}, {z_new})，遇到障碍物")
-            new_route = self.route[:]
-            new_route.append([self.x, self.y, self.z])
-            return Point(self.x, self.y, z_new, g=g_new, route=new_route)
-
-    def iterate_one_time(self):
-        for method in self.iterate_funcs:
-            try:
-                new_point = method()
+    def move(self, axis: str, forward: bool = True):
+        try:
+            change = 1 if forward else -1
+            x_new = self.x + change if axis == "x" else self.x
+            y_new = self.y + change if axis == "y" else self.y
+            z_new = self.z + change if axis == "z" else self.z
+            if x_new > LENGTH or x_new < 0 or y_new > WIDTH or y_new < 0 or z_new > HEIGHT or z_new < 0:
+                raise Exception(f"当前坐标：({x_new}, {y_new}, {z_new})，超出边界")
+            else:
+                g_new = self.g + 1
+                if this_point_is_an_obstacle(x_new, y_new, z_new):
+                    raise Exception(f"当前坐标：({x_new}, {y_new}, {z_new})，遇到障碍物")
+                new_route = self.route[:]
+                new_route.append([self.x, self.y, self.z])
+                new_point = Point(x_new, y_new, z_new, g=g_new, route=new_route)
                 if new_point.to_list() not in computed_points_lists:
                     computed_points_lists.append(new_point.to_list())
                     computed_points.append(new_point)
@@ -214,9 +138,21 @@ class OperationalPoint(Point):
                     new_point_index = computed_points_lists.index(new_point.to_list())
                     if computed_points[new_point_index].f > new_point.f:
                         computed_points[new_point_index] = new_point
-            except Exception as e:
-                # print(e)
-                continue
+        except Exception as e:
+            pass  # print(e)
+
+    def iterate_one_time(self):
+        threads = []
+        if IF_3D:
+            axis_list = ["x", "y", "z"]
+        else:
+            axis_list = ["x", "y"]
+        for axis in axis_list:
+            for forward in [True, False]:
+                task = Thread(target=self.move, args=[axis, forward])
+                threads.append(task)
+                task.start()
+        threads[-1].join()
 
 
 def determine_best_point():
@@ -244,8 +180,7 @@ def determine_best_point():
             print("未到达终点，但已遍历所有情况")
             return computed_points[0]
         if best_point.x == TERMINAL_POINT_X and best_point.y == TERMINAL_POINT_Y and best_point.z == TERMINAL_POINT_Z:
-            REACH_THE_DESTINATION = True
-
+            REACH_THE_DESTINATION = True  # 到达终点
         if best_point.to_list() not in closed_points_lists:
             if not REACH_THE_DESTINATION:
                 closed_points_lists.append(best_point.to_list())
@@ -253,6 +188,7 @@ def determine_best_point():
         return best_point
 
 
+# 使用plotly进行可视化
 def visualize(route_mode: bool = True):
     t_ls = []
     x_ls = []
@@ -299,7 +235,6 @@ def visualize(route_mode: bool = True):
 
 if __name__ == '__main__':
     start_time = perf_counter()
-    print("START")
     record_all_obstacle_on_the_map()
 
     starting_point = OperationalPoint(STARTING_POINT_X, STARTING_POINT_Y, STARTING_POINT_Z)
