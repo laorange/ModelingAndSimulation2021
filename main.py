@@ -66,11 +66,18 @@ def record_all_obstacle_on_the_map():
             if opt.use_3d:
                 for z in range(opt.map_z + 1):
                     if this_point_is_an_obstacle(x, y, z):
-                        obstacle_points.append(Point(x, y, z))
+                        obstacle_points.append([x, y, z])
             else:
                 z = opt.start_z
                 if this_point_is_an_obstacle(x, y, z):
-                    obstacle_points.append(Point(x, y, z))
+                    obstacle_points.append([x, y, z])
+    if not opt.use_3d:  # 2维图画出边界
+        for x in range(- 1, opt.map_x + 2):
+            obstacle_points.append([x, -1, opt.start_z])
+            obstacle_points.append([x, opt.map_y + 1, opt.start_z])
+        for y in range(0, opt.map_y + 1):
+            obstacle_points.append([-1, y, opt.start_z])
+            obstacle_points.append([opt.map_x + 1, y, opt.start_z])
 
 
 class OperationalPoint(Point):
@@ -197,9 +204,9 @@ def visualize(route_mode: bool = True):
         z_ls.append(last_best_point.z)
     for obstacle_point in obstacle_points:
         t_ls.append(-100)
-        x_ls.append(obstacle_point.x)
-        y_ls.append(obstacle_point.y)
-        z_ls.append(obstacle_point.z)
+        x_ls.append(obstacle_point[0])
+        y_ls.append(obstacle_point[1])
+        z_ls.append(obstacle_point[2])
 
     data = {"t": t_ls, "x": x_ls, "y": y_ls, "z": z_ls}
     my_frame = pd.DataFrame(data)
@@ -263,5 +270,6 @@ if __name__ == '__main__':
 
     print("\n用时: {:.2f}秒".format(perf_counter() - start_time))
 
-    visualize(route_mode=True)
+    if not opt.debug:
+        visualize(route_mode=True)
     visualize(route_mode=False)
