@@ -122,7 +122,7 @@ class OperationalPoint(Point):
                     if computed_points[new_point_index].g > new_point.g:
                         computed_points[new_point_index] = new_point
         except Exception as e:
-            pass  # print(e)
+            exceptions.append(e)
 
     def iterate_one_time(self):
         threads = []
@@ -215,6 +215,14 @@ def visualize(route_mode: bool = True):
     plotly.offline.plot(fig, filename=f"{'result_route' if route_mode else 'result_scan'}.html")
 
 
+def prepare_before_iterate(start_point: OperationalPoint):
+    start_point.be_closed()
+    computed_points_lists.append(start_point.to_list())
+    computed_points.append(start_point)
+    closed_points_lists.append(start_point.to_list())
+    start_point.iterate_one_time()
+
+
 if __name__ == '__main__':
     start_time = perf_counter()
 
@@ -242,20 +250,19 @@ if __name__ == '__main__':
     computed_points_lists = []
     closed_points_lists = []
     obstacle_points = []
+    exceptions = []
 
     REACH_THE_DESTINATION = opt.debug
     if REACH_THE_DESTINATION:
         print("当前为调试模式，可查看障碍物&起点终点位置")
+        closed_points_lists.append([opt.start_x, opt.start_y, opt.start_z])
         closed_points_lists.append([opt.end_x, opt.end_y, opt.end_z])
 
     record_all_obstacle_on_the_map()
 
     starting_point = OperationalPoint(opt.start_x, opt.start_y, opt.start_z)
-    starting_point.be_closed()
-    computed_points_lists.append(starting_point.to_list())
-    computed_points.append(starting_point)
-    closed_points_lists.append(starting_point.to_list())
-    starting_point.iterate_one_time()
+    if not opt.debug:
+        prepare_before_iterate(start_point=starting_point)
 
     while not REACH_THE_DESTINATION:
         best_point = determine_best_point()
@@ -268,7 +275,7 @@ if __name__ == '__main__':
                                                                 100 * progress), end='')
         new_operational_point.iterate_one_time()
 
-    print("\n用时: {:.2f}秒".format(perf_counter() - start_time))
+    print("\n用时: {:.4f}秒".format(perf_counter() - start_time))
 
     if not opt.debug:
         visualize(route_mode=True)
