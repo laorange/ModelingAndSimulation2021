@@ -1,76 +1,41 @@
-from time import perf_counter
-import random
-from threading import Thread
 import pandas as pd
 import plotly
 import plotly.express as px
 
-# TODO: 维度是否为3维
-IF_3D = False
-
-# TODO: 是否可以沿对角线方向移动 (请注意：2d情况下, 与x,y轴不平行的单线障碍物会被穿过)
-OBLIQUE = False
-
-# TODO: 地图大小
-LENGTH = 100
-WIDTH = 100
-HEIGHT = 100
-
-# TODO: 起点位置 的 x,y,z坐标
-STARTING_POINT_X = 0
-STARTING_POINT_Y = 0
-STARTING_POINT_Z = 0
-
-# TODO: 终点位置 的 x,y,z坐标
-TERMINAL_POINT_X = 80  # 10  # 10  # 66  # 45  # 66  # 35  # 60
-TERMINAL_POINT_Y = 80  # 90  # 90  # 56  # 60  # 56  # 20  # 90
-TERMINAL_POINT_Z = 80
-
-if not IF_3D and STARTING_POINT_Z != TERMINAL_POINT_Z:
-    TERMINAL_POINT_Z = STARTING_POINT_Z
-    print("2维模式下，起点和终点的Z轴坐标必须相同，已自动将终点位置的z轴坐标设为与起点相同")
-
-# TODO: 计算过的点将会添加到此处
-computed_points = []
-computed_points_lists = []
-closed_points_lists = []
-obstacle_points = []
-
-# TODO: 是否已到达终点 (提示：可以先设置该项为True来查看障碍物的形状)
-REACH_THE_DESTINATION = False
-if REACH_THE_DESTINATION:
-    print("当前为障碍物调试模式，如需开始计算请将REACH_THE_DESTINATION设为False")
-    closed_points_lists.append([TERMINAL_POINT_X, TERMINAL_POINT_Y, TERMINAL_POINT_Z])
+from time import perf_counter
+import random
+from threading import Thread
+import argparse
 
 
 # TODO: 在此处设置障碍物的位置
 def this_point_is_an_obstacle(x: int, y: int, z: int):
     OBSTACLE = False
     # 2d obstacle
-    if not IF_3D:
-        if x > 10 and y == 50 - x:
+    if not opt.use_3d:
+        if x > 10 and abs(y - 50 + x) <= 2:
             OBSTACLE = True
-        if x < 50 and y == 60 - x:
+        if x < 50 and abs(y - 60 + x) <= 2:
             OBSTACLE = True
-        if x > 40 and y == 70 - x:
+        if x > 40 and abs(y - 70 + x) <= 2:
             OBSTACLE = True
-        if x == 50 and y > 40:
+        if abs(x - 50) <= 2 and y > 40:
             OBSTACLE = True
-        if x == 40 and 30 <= y < 80:
+        if abs(x - 40) <= 2 and 30 <= y < 80:
             OBSTACLE = True
-        if 60 <= x <= 70 and y == 120 - x:
+        if 60 <= x <= 70 and abs(y - 120 + x) <= 2:
             OBSTACLE = True
-        if 50 <= x <= 70 and y == 140 - x:
+        if 50 <= x <= 70 and abs(y - 140 + x) <= 2:
             OBSTACLE = True
-        if x == 70 and 50 <= y <= 70:
+        if abs(x - 70) <= 2 and 50 <= y <= 70:
             OBSTACLE = True
     # 3d obstacle
     else:
-        if y == 20 - x and z < 60:
+        if abs(y - 40 + x) <= 2 and z < 60:
             OBSTACLE = True
-        if y == 60 - x and 70 <= z <= 90:
+        if abs(y - 60 + x) <= 2 and 60 <= z <= 90:
             OBSTACLE = True
-        if x + y + z == 160 and 40 <= x <= 60 and 40 <= y <= 60 and 40 <= z <= 80:
+        if abs(x + y + z - 160) <= 2 and 40 <= y <= 60 and 40 <= z <= 80:
             OBSTACLE = True
     return OBSTACLE
 
@@ -83,10 +48,10 @@ class Point:
         self.g = g  # g: 步数
 
         # h: 距离终点的Manhattan distance: h(n) = D ∗ (dx + dy + dz)
-        if IF_3D:
-            self.h = abs(TERMINAL_POINT_X - self.x) + abs(TERMINAL_POINT_Y - self.y) + abs(TERMINAL_POINT_Z - self.z)
+        if opt.use_3d:
+            self.h = abs(opt.end_x - self.x) + abs(opt.end_y - self.y) + abs(opt.end_z - self.z)
         else:
-            self.h = int(abs(TERMINAL_POINT_X - self.x) + abs(TERMINAL_POINT_Y - self.y))
+            self.h = int(abs(opt.end_x - self.x) + abs(opt.end_y - self.y))
 
         self.f = self.g + self.h
 
@@ -106,14 +71,14 @@ class Point:
 # 在图中画出障碍物(点过多可能会导致图像加载失败)
 def record_all_obstacle_on_the_map():
     global obstacle_points
-    for x in range(LENGTH):
-        for y in range(WIDTH):
-            if IF_3D:
-                for z in range(HEIGHT):
+    for x in range(opt.map_x):
+        for y in range(opt.map_y):
+            if opt.use_3d:
+                for z in range(opt.map_z):
                     if this_point_is_an_obstacle(x, y, z):
                         obstacle_points.append(Point(x, y, z))
             else:
-                z = STARTING_POINT_Z
+                z = opt.start_z
                 if this_point_is_an_obstacle(x, y, z):
                     obstacle_points.append(Point(x, y, z))
 
@@ -142,7 +107,7 @@ class OperationalPoint(Point):
                 z_new = self.z + change
             else:
                 z_new = self.z
-            if x_new > LENGTH or x_new < 0 or y_new > WIDTH or y_new < 0 or z_new > HEIGHT or z_new < 0:
+            if x_new > opt.map_x or x_new < 0 or y_new > opt.map_y or y_new < 0 or z_new > opt.map_z or z_new < 0:
                 raise Exception(f"当前坐标：({x_new}, {y_new}, {z_new})，超出边界")
             else:
                 g_new = self.g + 1
@@ -163,15 +128,15 @@ class OperationalPoint(Point):
 
     def iterate_one_time(self):
         threads = []
-        if IF_3D:
+        if opt.use_3d:
             axis_list = ["x", "y", "z", "-x", "-y", "-z"]
-            if OBLIQUE:
+            if opt.oblique:
                 axis_list = ["x", "y", "z", "-x", "-y", "-z", 'xy', 'xz', 'yz', '-xy',
                              '-xz', '-yz', 'x-y', 'x-z', 'y-z', '-x-y', '-x-z', '-y-z',
                              "xyz", "-xyz", "x-yz", "xy-z", "-x-yz", "-xy-z", "x-y-z", "-x-y-z"]
         else:
             axis_list = ["x", "y", "-x", "-y"]
-            if OBLIQUE:
+            if opt.oblique:
                 axis_list = ["x", "y", "-x", "-y", 'xy', '-xy', 'x-y', '-x-y']
         for axis in axis_list:
             task = Thread(target=self.move, args=[axis])
@@ -204,9 +169,9 @@ def determine_best_point():
             REACH_THE_DESTINATION = True
             print("未到达终点，但已遍历所有情况")
             return computed_points[0]
-        if temp_best_point.x == TERMINAL_POINT_X:
-            if temp_best_point.y == TERMINAL_POINT_Y:
-                if temp_best_point.z == TERMINAL_POINT_Z:
+        if temp_best_point.x == opt.end_x:
+            if temp_best_point.y == opt.end_y:
+                if temp_best_point.z == opt.end_z:
                     REACH_THE_DESTINATION = True  # 到达终点
         if temp_best_point.to_list() not in closed_points_lists:
             if not REACH_THE_DESTINATION:
@@ -262,9 +227,40 @@ def visualize(route_mode: bool = True):
 
 if __name__ == '__main__':
     start_time = perf_counter()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--use-3d', action='store_true', help='维度是否为3维')
+    parser.add_argument('--debug', action='store_true', help='调试模式，可查看障碍物&起点终点位置')
+    parser.add_argument('--oblique', action='store_true', help='是否可以沿对角线方向移动 (单线/单层障碍物会被穿过，除非至少与两轴平行)')
+    parser.add_argument('--map-x', nargs='?', type=int, default=100, metavar='int', help='地图长度')
+    parser.add_argument('--map-y', nargs='?', type=int, default=100, metavar='int', help='地图宽度')
+    parser.add_argument('--map-z', nargs='?', type=int, default=100, metavar='int', help='地图高度')
+    parser.add_argument('--start-x', nargs='?', type=int, default=0, metavar='int', help='起点x轴坐标')
+    parser.add_argument('--start-y', nargs='?', type=int, default=0, metavar='int', help='起点y轴坐标')
+    parser.add_argument('--start-z', nargs='?', type=int, default=0, metavar='int', help='起点z轴坐标')
+    parser.add_argument('--end-x', nargs='?', type=int, default=80, metavar='int', help='终点x轴坐标')
+    parser.add_argument('--end-y', nargs='?', type=int, default=80, metavar='int', help='终点y轴坐标')
+    parser.add_argument('--end-z', nargs='?', type=int, default=80, metavar='int', help='终点z轴坐标')
+    opt = parser.parse_args()
+
+    if not opt.use_3d and opt.start_z != opt.end_z:
+        opt.end_z = opt.start_z
+        print("2维模式下，起点和终点的Z轴坐标必须相同，已自动将终点位置的z轴坐标设为与起点相同")
+
+    # TODO: 计算过的点将会添加到此处
+    computed_points = []
+    computed_points_lists = []
+    closed_points_lists = []
+    obstacle_points = []
+
+    REACH_THE_DESTINATION = opt.debug
+    if REACH_THE_DESTINATION:
+        print("当前为调试模式，可查看障碍物&起点终点位置")
+        closed_points_lists.append([opt.end_x, opt.end_y, opt.end_z])
+
     record_all_obstacle_on_the_map()
 
-    starting_point = OperationalPoint(STARTING_POINT_X, STARTING_POINT_Y, STARTING_POINT_Z)
+    starting_point = OperationalPoint(opt.start_x, opt.start_y, opt.start_z)
     starting_point.be_closed()
     computed_points_lists.append(starting_point.to_list())
     computed_points.append(starting_point)
