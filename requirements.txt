@@ -1,2 +1,1 @@
-pandas
 plotly>=4.14.3

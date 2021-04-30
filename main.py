@@ -1,5 +1,5 @@
+from random import randint
 from time import perf_counter
-import random
 from threading import Thread
 import argparse
 import plotly
@@ -8,6 +8,7 @@ import plotly.express as px
 # 全局变量
 computed_points = []
 computed_points_lists = []
+computed_points_f = []
 closed_points_lists = []
 obstacle_points = []
 exceptions = []  # 该列表记录遇障情况，默认不输出
@@ -18,19 +19,29 @@ def this_point_is_an_obstacle(x: int, y: int, z: int):
     OBSTACLE = False
     # TODO: ↓ 在下方定义 2d 的障碍
     if not opt.use_3d:
-        if x > 2 and abs(y - 10 + x) < 2:
+        if x > 10 and y == 50 - x:
             OBSTACLE = True
-        if x < 10 and abs(y - 15 + x) < 2:
+        if x < 50 and y == 60 - x:
             OBSTACLE = True
-        if abs(y - 13) < 4 and abs(x - 13) < 4:
+        if x > 40 and y == 70 - x:
+            OBSTACLE = True
+        if x == 50 and y > 40:
+            OBSTACLE = True
+        if x == 40 and 30 <= y < 80:
+            OBSTACLE = True
+        if 60 <= x <= 70 and y == 120 - x:
+            OBSTACLE = True
+        if 50 <= x <= 70 and y == 140 - x:
+            OBSTACLE = True
+        if x == 70 and 50 <= y <= 70:
             OBSTACLE = True
     # TODO: ↓ 在下方定义 3d 的障碍
     else:
-        if abs(y - 10 + x) < 2 and z < 12:
+        if y == 20 - x and z < 60:
             OBSTACLE = True
-        if abs(y - 20 + x) < 2 and 12 <= z:
+        if y == 60 - x and 70 <= z <= 90:
             OBSTACLE = True
-        if abs(x + y + z - 44) < 2 and 8 <= x <= 18 and 8 <= y <= 18 and 8 <= z <= 16:
+        if x + y + z == 160 and 40 <= x <= 60 and 40 <= y <= 60 and 40 <= z <= 80:
             OBSTACLE = True
     return OBSTACLE
 
@@ -44,14 +55,14 @@ class Point:
 
         if opt.use_3d:  # h 到终点的距离
             self.h = abs(opt.end_x - self.x) + abs(opt.end_y - self.y) + abs(opt.end_z - self.z)
-            if opt.oblique:
+            if not opt.straight:
                 self.h = ((opt.end_x - self.x) ** 2 + (opt.end_y - self.y) ** 2 + (opt.end_z - self.z) ** 2) ** 0.5
         else:
             self.h = int(abs(opt.end_x - self.x) + abs(opt.end_y - self.y))
-            if opt.oblique:
+            if not opt.straight:
                 self.h = ((opt.end_x - self.x) ** 2 + (opt.end_y - self.y) ** 2) ** 0.5
 
-        self.f = self.g + self.h
+        self.f = self.g + 1.01 * self.h  # 提高h的占比，使得在原本f相同时，取h小的点
         self.t = g if t == 0 else t  # t: 默认值为g, 数值越大颜色越鲜艳
         self.route = route if route is not None else []  # 从终点到该点的路径
         self.close = False  # 是否close
@@ -92,28 +103,33 @@ class OperationalPoint(Point):
             new_coordinate = {'x': self.x, 'y': self.y, 'z': self.z}
             for axis_name in ['x', 'y', 'z']:
                 if axis_name in axis:
-                    distance += 1
-                    change = 1
-                    if ("-" + axis_name) in axis:
-                        change = -1
+                    change = -1 if ("-" + axis_name) in axis else 1
                     new_coordinate[axis_name] += change
+                    if not this_point_is_an_obstacle(new_coordinate['x'], new_coordinate['y'], new_coordinate['z']):
+                        distance += 1
+                    else:
+                        raise Exception(f"({new_coordinate['x']}, {new_coordinate['y']}, {new_coordinate['z']})，遇到障碍物")
             if new_coordinate['x'] > opt.map_x or new_coordinate['x'] < 0 or new_coordinate['y'] > opt.map_y or \
                     new_coordinate['y'] < 0 or new_coordinate['z'] > opt.map_z or new_coordinate['z'] < 0:
-                raise Exception(f"当前坐标：({new_coordinate['x']}, {new_coordinate['y']}, {new_coordinate['z']})，超出边界")
+                raise Exception(f"({new_coordinate['x']}, {new_coordinate['y']}, {new_coordinate['z']})，超出边界")
             else:
                 g_new = self.g + distance ** 0.5
                 if this_point_is_an_obstacle(new_coordinate['x'], new_coordinate['y'], new_coordinate['z']):
-                    raise Exception(f"当前坐标：({new_coordinate['x']}, {new_coordinate['y']}, {new_coordinate['z']})，遇到障碍物")
+                    raise Exception(f"({new_coordinate['x']}, {new_coordinate['y']}, {new_coordinate['z']})，遇到障碍物")
                 new_route = self.route[:]
                 new_route.append([self.x, self.y, self.z])
                 new_point = Point(new_coordinate['x'], new_coordinate['y'], new_coordinate['z'], g_new, route=new_route)
                 if new_point.to_list() not in computed_points_lists:
                     computed_points_lists.append(new_point.to_list())
                     computed_points.append(new_point)
+                    computed_points_f.append(new_point.f)
                 else:
                     new_point_index = computed_points_lists.index(new_point.to_list())
                     if computed_points[new_point_index].g > new_point.g:
                         computed_points[new_point_index] = new_point
+                        computed_points_f[new_point_index] = new_point.f
+                        if new_point.to_list() in closed_points_lists:
+                            closed_points_lists.remove(new_point.to_list())
         except Exception as e:
             exceptions.append(e)  # 添加遇障信息
 
@@ -121,15 +137,16 @@ class OperationalPoint(Point):
         threads = []
         if opt.use_3d:  # 3d 情况
             axis_list = ["x", "y", "z", "-x", "-y", "-z"]
-            if opt.oblique:
+            if not opt.straight:
                 axis_list = ["x", "y", "z", "-x", "-y", "-z", 'xy', 'xz', 'yz', '-xy',
                              '-xz', '-yz', 'x-y', 'x-z', 'y-z', '-x-y', '-x-z', '-y-z',
                              "xyz", "-xyz", "x-yz", "xy-z", "-x-yz", "-xy-z", "x-y-z", "-x-y-z"]
         else:  # 2d 情况
             axis_list = ["x", "y", "-x", "-y"]
-            if opt.oblique:
+            if not opt.straight:
                 axis_list = ["x", "y", "-x", "-y", 'xy', '-xy', 'x-y', '-x-y']
-        for axis in axis_list:
+        while axis_list:
+            axis = axis_list.pop(randint(0, len(axis_list) - 1))
             task = Thread(target=self.move, args=[axis])  # 多线程加速计算
             threads.append(task)
             task.start()
@@ -137,25 +154,14 @@ class OperationalPoint(Point):
 
 
 def determine_best_point():
+    # fuck()
     global REACH_THE_DESTINATION
+    MAX_DISTANCE_ON_THE_MAP = (opt.map_x + opt.map_y + opt.map_z) * 2
     if computed_points:
-        temp_best_point = None
-        ALL_CLOSED = True
-        for computed_point in computed_points:
-            if not computed_point.close:
-                ALL_CLOSED = False
-                if temp_best_point is None:
-                    temp_best_point = computed_point
-                else:
-                    if computed_point.to_list() not in closed_points_lists:
-                        if computed_point.f < temp_best_point.f:
-                            temp_best_point = computed_point
-                        elif computed_point.f == temp_best_point.f:
-                            if computed_point.h < temp_best_point.h:
-                                temp_best_point = computed_point
-                            elif computed_point.h == temp_best_point.h:
-                                if random.randint(0, 1):  # 此处引入随机数，如果h和f均相等，由随机数决定是否为temp_best_point
-                                    temp_best_point = computed_point
+        min_f = min(computed_points_f[::-1])
+        ALL_CLOSED = False if min_f <= MAX_DISTANCE_ON_THE_MAP else True
+        index_min_f = len(computed_points_f) - computed_points_f[::-1].index(min_f) - 1
+        temp_best_point = computed_points[index_min_f]
         if ALL_CLOSED:
             REACH_THE_DESTINATION = True
             print("未到达终点，但已遍历所有情况")
@@ -167,7 +173,11 @@ def determine_best_point():
         if temp_best_point.to_list() not in closed_points_lists:
             if not REACH_THE_DESTINATION:
                 closed_points_lists.append(temp_best_point.to_list())
-                computed_points[computed_points.index(temp_best_point)].be_closed()
+                computed_points[index_min_f].be_closed()
+                computed_points_f[index_min_f] += MAX_DISTANCE_ON_THE_MAP
+        else:
+            REACH_THE_DESTINATION = True
+            print("未到达终点，但出错了")
         return temp_best_point
 
 
@@ -206,29 +216,28 @@ def visualize(route_mode: bool = True):
 
 
 def prepare_before_iterate(start_point: OperationalPoint):
-    start_point.be_closed()
+    # start_point.be_closed()
     computed_points_lists.append(start_point.to_list())
     computed_points.append(start_point)
-    closed_points_lists.append(start_point.to_list())
-    start_point.iterate_one_time()
+    computed_points_f.append(start_point.f)
 
 
 if __name__ == '__main__':
-    start_time = perf_counter()
+    start_time = perf_counter()  # 记录开始时间
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--use-3d', action='store_true', help='维度是否为3维')
     parser.add_argument('--debug', action='store_true', help='调试模式，可查看障碍物&起点终点位置')
-    parser.add_argument('--oblique', action='store_true', help='是否可以沿对角线方向移动 (单线/单层障碍物会被穿过，除非至少与两轴平行)')
-    parser.add_argument('--map-x', nargs='?', type=int, default=20, metavar='int', help='地图长度')
-    parser.add_argument('--map-y', nargs='?', type=int, default=20, metavar='int', help='地图宽度')
-    parser.add_argument('--map-z', nargs='?', type=int, default=20, metavar='int', help='地图高度')
+    parser.add_argument('--straight', action='store_true', help='是否按直线行进（即不能沿对角线方向移动）')
+    parser.add_argument('--map-x', nargs='?', type=int, default=100, metavar='int', help='地图长度')
+    parser.add_argument('--map-y', nargs='?', type=int, default=100, metavar='int', help='地图宽度')
+    parser.add_argument('--map-z', nargs='?', type=int, default=100, metavar='int', help='地图高度')
     parser.add_argument('--start-x', nargs='?', type=int, default=0, metavar='int', help='起点x轴坐标')
     parser.add_argument('--start-y', nargs='?', type=int, default=0, metavar='int', help='起点y轴坐标')
     parser.add_argument('--start-z', nargs='?', type=int, default=0, metavar='int', help='起点z轴坐标')
-    parser.add_argument('--end-x', nargs='?', type=int, default=20, metavar='int', help='终点x轴坐标')
-    parser.add_argument('--end-y', nargs='?', type=int, default=20, metavar='int', help='终点y轴坐标')
-    parser.add_argument('--end-z', nargs='?', type=int, default=20, metavar='int', help='终点z轴坐标')
+    parser.add_argument('--end-x', nargs='?', type=int, default=80, metavar='int', help='终点x轴坐标')
+    parser.add_argument('--end-y', nargs='?', type=int, default=80, metavar='int', help='终点y轴坐标')
+    parser.add_argument('--end-z', nargs='?', type=int, default=80, metavar='int', help='终点z轴坐标')
     opt = parser.parse_args()
 
     if not opt.use_3d and opt.start_z != opt.end_z:
