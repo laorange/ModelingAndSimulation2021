@@ -2,22 +2,30 @@ from time import perf_counter
 import random
 from threading import Thread
 import argparse
-import pandas as pd
 import plotly
 import plotly.express as px
+
+# 全局变量
+computed_points = []
+computed_points_lists = []
+closed_points_lists = []
+obstacle_points = []
+exceptions = []  # 该列表记录遇障情况，默认不输出
 
 
 # TODO: 在此处设置障碍物的位置
 def this_point_is_an_obstacle(x: int, y: int, z: int):
     OBSTACLE = False
-    if not opt.use_3d:  # ↓ 2d obstacle
+    # TODO: ↓ 在下方定义 2d 的障碍
+    if not opt.use_3d:
         if x > 2 and abs(y - 10 + x) < 2:
             OBSTACLE = True
         if x < 10 and abs(y - 15 + x) < 2:
             OBSTACLE = True
         if abs(y - 13) < 4 and abs(x - 13) < 4:
             OBSTACLE = True
-    else:  # ↓ 3d obstacle
+    # TODO: ↓ 在下方定义 3d 的障碍
+    else:
         if abs(y - 10 + x) < 2 and z < 12:
             OBSTACLE = True
         if abs(y - 20 + x) < 2 and 12 <= z:
@@ -44,11 +52,8 @@ class Point:
                 self.h = ((opt.end_x - self.x) ** 2 + (opt.end_y - self.y) ** 2) ** 0.5
 
         self.f = self.g + self.h
-
         self.t = g if t == 0 else t  # t: 默认值为g, 数值越大颜色越鲜艳
-
         self.route = route if route is not None else []  # 从终点到该点的路径
-
         self.close = False  # 是否close
 
     def to_list(self):
@@ -58,7 +63,7 @@ class Point:
         self.close = True
 
 
-# 在图中画出障碍物(点过多可能会导致图像加载失败)
+# 在图中画出障碍物
 def record_all_obstacle_on_the_map():
     global obstacle_points
     for x in range(opt.map_x + 1):
@@ -84,36 +89,24 @@ class OperationalPoint(Point):
     def move(self, axis: str):
         try:
             distance = 0
-            x_new = self.x
-            y_new = self.y
-            z_new = self.z
-            if "x" in axis:
-                distance += 1
-                change = 1
-                if "-x" in axis:
-                    change = -1
-                x_new = self.x + change
-            if "y" in axis:
-                distance += 1
-                change = 1
-                if "-y" in axis:
-                    change = -1
-                y_new = self.y + change
-            if "z" in axis:
-                distance += 1
-                change = 1
-                if "-z" in axis:
-                    change = -1
-                z_new = self.z + change
-            if x_new > opt.map_x or x_new < 0 or y_new > opt.map_y or y_new < 0 or z_new > opt.map_z or z_new < 0:
-                raise Exception(f"当前坐标：({x_new}, {y_new}, {z_new})，超出边界")
+            new_coordinate = {'x': self.x, 'y': self.y, 'z': self.z}
+            for axis_name in ['x', 'y', 'z']:
+                if axis_name in axis:
+                    distance += 1
+                    change = 1
+                    if ("-" + axis_name) in axis:
+                        change = -1
+                    new_coordinate[axis_name] += change
+            if new_coordinate['x'] > opt.map_x or new_coordinate['x'] < 0 or new_coordinate['y'] > opt.map_y or \
+                    new_coordinate['y'] < 0 or new_coordinate['z'] > opt.map_z or new_coordinate['z'] < 0:
+                raise Exception(f"当前坐标：({new_coordinate['x']}, {new_coordinate['y']}, {new_coordinate['z']})，超出边界")
             else:
                 g_new = self.g + distance ** 0.5
-                if this_point_is_an_obstacle(x_new, y_new, z_new):
-                    raise Exception(f"当前坐标：({x_new}, {y_new}, {z_new})，遇到障碍物")
+                if this_point_is_an_obstacle(new_coordinate['x'], new_coordinate['y'], new_coordinate['z']):
+                    raise Exception(f"当前坐标：({new_coordinate['x']}, {new_coordinate['y']}, {new_coordinate['z']})，遇到障碍物")
                 new_route = self.route[:]
                 new_route.append([self.x, self.y, self.z])
-                new_point = Point(x_new, y_new, z_new, g=g_new, route=new_route)
+                new_point = Point(new_coordinate['x'], new_coordinate['y'], new_coordinate['z'], g_new, route=new_route)
                 if new_point.to_list() not in computed_points_lists:
                     computed_points_lists.append(new_point.to_list())
                     computed_points.append(new_point)
@@ -122,22 +115,22 @@ class OperationalPoint(Point):
                     if computed_points[new_point_index].g > new_point.g:
                         computed_points[new_point_index] = new_point
         except Exception as e:
-            exceptions.append(e)
+            exceptions.append(e)  # 添加遇障信息
 
     def iterate_one_time(self):
         threads = []
-        if opt.use_3d:
+        if opt.use_3d:  # 3d 情况
             axis_list = ["x", "y", "z", "-x", "-y", "-z"]
             if opt.oblique:
                 axis_list = ["x", "y", "z", "-x", "-y", "-z", 'xy', 'xz', 'yz', '-xy',
                              '-xz', '-yz', 'x-y', 'x-z', 'y-z', '-x-y', '-x-z', '-y-z',
                              "xyz", "-xyz", "x-yz", "xy-z", "-x-yz", "-xy-z", "x-y-z", "-x-y-z"]
-        else:
+        else:  # 2d 情况
             axis_list = ["x", "y", "-x", "-y"]
             if opt.oblique:
                 axis_list = ["x", "y", "-x", "-y", 'xy', '-xy', 'x-y', '-x-y']
         for axis in axis_list:
-            task = Thread(target=self.move, args=[axis])
+            task = Thread(target=self.move, args=[axis])  # 多线程加速计算
             threads.append(task)
             task.start()
         threads[-1].join()
@@ -208,10 +201,7 @@ def visualize(route_mode: bool = True):
         y_ls.append(obstacle_point[1])
         z_ls.append(obstacle_point[2])
 
-    data = {"t": t_ls, "x": x_ls, "y": y_ls, "z": z_ls}
-    my_frame = pd.DataFrame(data)
-
-    fig = px.scatter_3d(my_frame, x='x', y='y', z='z', color='t')
+    fig = px.scatter_3d(x=x_ls, y=y_ls, z=z_ls, color=t_ls)
     plotly.offline.plot(fig, filename=f"{'result_route' if route_mode else 'result_scan'}.html")
 
 
@@ -244,13 +234,6 @@ if __name__ == '__main__':
     if not opt.use_3d and opt.start_z != opt.end_z:
         opt.end_z = opt.start_z
         print("2维模式下，起点和终点的Z轴坐标必须相同，已自动将终点位置的z轴坐标设为与起点相同")
-
-    # 计算过的点将会添加到此处
-    computed_points = []
-    computed_points_lists = []
-    closed_points_lists = []
-    obstacle_points = []
-    exceptions = []
 
     REACH_THE_DESTINATION = opt.debug
     if REACH_THE_DESTINATION:

@@ -12,9 +12,9 @@ Modeling_and_Simulation2021
 
 > 可选择沿对角线方向移动(2d变为8向, 3d变为26向)，但在以下示例中未开启该选项，2d为前后左右4个方向（3d为前后左右上下6个方向）
 
-源代码：[main.py](https://github.com/laorange/Modeling_and_Simulation2021/blob/main/main.py)
+源代码：[main.py](/laorange/Modeling_and_Simulation2021/blob/main/main.py)
 
-更新日志：[log.md](https://github.com/laorange/Modeling_and_Simulation2021/blob/main/log.md)
+更新日志：[log.md](/laorange/Modeling_and_Simulation2021/blob/main/log.md)
 
 ## 使用说明
 
@@ -64,19 +64,19 @@ if x == 70 and 50 <= y <= 70:
     OBSTACLE = True
 ```
 
-![image-20210413152325940](README_image/image-20210413152325940.png)
+![image-20210413152325940](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413152325940.png)
 
 #### 路径图
 
-![image-20210413152449797](README_image/image-20210413152449797.png)
+![image-20210413152449797](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413152449797.png)
 
-![image-20210413152646004](README_image/image-20210413152646004.png)
+![image-20210413152646004](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413152646004.png)
 
 #### 迭代过程图
 
-![image-20210413152801304](README_image/image-20210413152801304.png)
+![image-20210413152801304](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413152801304.png)
 
-![image-20210413152855198](README_image/image-20210413152855198.png)
+![image-20210413152855198](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413152855198.png)
 
 ### 3维情况
 
@@ -93,27 +93,27 @@ if x + y + z == 160 and 40 <= x <= 60 and 40 <= y <= 60 and 40 <= z <= 80:
     OBSTACLE = True
 ```
 
-![image-20210413153548200](README_image/image-20210413153548200.png)
+![image-20210413153548200](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413153548200.png)
 
-![image-20210413154016518](README_image/image-20210413154016518.png)
+![image-20210413154016518](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413154016518.png)
 
 #### 路径图
 
-![image-20210413154320967](README_image/image-20210413154320967.png)
+![image-20210413154320967](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413154320967.png)
 
-![image-20210413154459927](README_image/image-20210413154459927.png)
+![image-20210413154459927](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413154459927.png)
 
-![image-20210413154609073](README_image/image-20210413154609073.png)
+![image-20210413154609073](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413154609073.png)
 
 #### 迭代过程图
 
-![image-20210413154733328](README_image/image-20210413154733328.png)
+![image-20210413154733328](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413154733328.png)
 
-![image-20210413154750230](README_image/image-20210413154750230.png)
+![image-20210413154750230](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413154750230.png)
 
-![image-20210413154854911](README_image/image-20210413154854911.png)
+![image-20210413154854911](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413154854911.png)
 
-![image-20210413155013934](README_image/image-20210413155013934.png)
+![image-20210413155013934](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413155013934.png)
 
 ## 其他说明
 
@@ -121,4 +121,4 @@ v1.7以后，地图默认大小改为20×20
 
 下图的识别仅需0.15秒
 
-![image-20210414093516055](README_image/image-20210414093516055.png)
+![image-20210414093516055](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210414093516055.png)
