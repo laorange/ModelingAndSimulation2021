@@ -10,115 +10,147 @@ Modeling_and_Simulation2021
 
 **开源授权协议: AGPL-3.0 License**
 
-> 可选择沿对角线方向移动(2d变为8向, 3d变为26向)，但在以下示例中未开启该选项，2d为前后左右4个方向（3d为前后左右上下6个方向）
-
-源代码：[main.py](/laorange/Modeling_and_Simulation2021/blob/main/main.py)
-
-更新日志：[log.md](/laorange/Modeling_and_Simulation2021/blob/main/log.md)
+[源代码](/laorange/Modeling_and_Simulation2021/blob/main/main.py)、[更新日志](/laorange/Modeling_and_Simulation2021/blob/main/log.md)、[GitHub](https://github.com/laorange/Modeling_and_Simulation2021)、[Gitee](https://gitee.com/laorange/Modeling_and_Simulation2021)
 
 ## 使用说明
 
 1. 打开命令行``cmd`` 或 ``Anaconda Prompt``
 
-2. 转到程序所在的文件夹下
+2. ``cd`` 转到程序所在的文件夹下
 
 3. 安装所需第三方库
 
-   ```
+   ```txt
    pip install pandas
    pip install plotly
    ```
-
-4. 输入``python main.py -h``可查看所有参数的说明
+   
+4. 输入 ``python main.py --help`` 可查看所有可选参数的说明
 
 5. 示例：
 
-   ![image-20210414095631207](README_image/image-20210414095631207.png)
+   ![image-20210502133419823](README_image/image-20210502133419823.png)
 
-## 结果
+> **备注**：默认是沿对角线方向移动(2d为8向, 3d为26向)；如果是传入``--straight``参数则使用直线模式：2d为前后左右4个方向（3d为前后左右上下6个方向）
 
-**地图大小 100 × 100**
+## 示例
 
-### 2维情况
-
-(0, 0) → (80, 80) : 用时 43.03秒
-
-#### 障碍物布局
+### 2d情况
 
 ```python
-if x > 10 and y == 50 - x:
+# 以下情况为障碍物
+if x == 2 and y in [2, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20, 21, 25, 26, 27, 28]:
     OBSTACLE = True
-if x < 50 and y == 60 - x:
+if x == 5 and y in [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 25, 26, 27, 28]:
     OBSTACLE = True
-if x > 40 and y == 70 - x:
+if x == 9 and y in [2, 6, 9, 13, 18, 21, 22, 23, 24, 25, 28, 29, 30]:
     OBSTACLE = True
-if x == 50 and y > 40:
+if x == 10 and y == 14:
     OBSTACLE = True
-if x == 40 and 30 <= y < 80:
+if x == 12 and y in [9, 12, 15, 18, 19, 20, 21, 25]:
     OBSTACLE = True
-if 60 <= x <= 70 and y == 120 - x:
+if x == 15 and y in [2, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 21, 22, 23, 24, 25, 28]:
     OBSTACLE = True
-if 50 <= x <= 70 and y == 140 - x:
+if x == 18 and y in [2, 3, 4, 5, 6, 7, 8, 9, 12, 13, 14, 15, 18, 21, 22, 23, 24, 25, 26, 27, 28]:
     OBSTACLE = True
-if x == 70 and 50 <= y <= 70:
+if x == 22 and y in [2, 3, 4, 5, 6, 9, 10, 11, 12, 15, 18, 19, 20, 21, 25, 26, 27, 28]:
+    OBSTACLE = True
+if x == 25 and y in [0, 1, 2, 6, 7, 8, 9, 12, 15, 16, 17, 18, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]:
+    OBSTACLE = True
+if x == 28 and y in [2, 3, 4, 5, 6, 9, 10, 11, 12, 15, 18, 21, 22, 23, 24, 25, 26, 27, 28]:
+    OBSTACLE = True
+if y == 2 and x in [3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 22, 23, 24, 25, 26, 27, 28]:
+    OBSTACLE = True
+if y == 6 and x in [0, 1, 2, 5, 9, 10, 11, 12, 13, 14, 15, 18]:
+    OBSTACLE = True
+if y == 9 and x in [6, 7, 8, 9, 10, 11, 12, 19, 20, 21, 23, 24, 26, 27, 28]:
+    OBSTACLE = True
+if y == 12 and x in [13, 14, 15, 16, 17, 22, 23, 24, 25]:
+    OBSTACLE = True
+if y == 15 and x in [3, 4, 11, 12, 13, 14, 19, 20, 21, 22, 23, 24, 28, 29, 30]:
+    OBSTACLE = True
+if y == 18 and x in [6, 7, 8, 10, 11, 12, 16, 17, 18, 19, 20, 21, 22, 26, 27, 28, 29, 30]:
+    OBSTACLE = True
+if y == 21 and x in [3, 4, 10, 11, 16, 17, 18, 22, 23, 24]:
+    OBSTACLE = True
+if y == 25 and x in [0, 1, 10, 11, 12, 13, 14, 19, 20, 21, 22]:
+    OBSTACLE = True
+if y == 28 and x in [6, 7, 8, 10, 11, 12, 15, 16, 17, 18, 22, 25, 29, 30]:
     OBSTACLE = True
 ```
 
-![image-20210413152325940](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413152325940.png)
+#### 对角线模式：(用时: 0.6947秒)
 
-#### 路径图
+路径图：https://laorange.github.io/Modeling_and_Simulation2021/results/2dor.html
 
-![image-20210413152449797](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413152449797.png)
+迭代图：https://laorange.github.io/Modeling_and_Simulation2021/results/2dos.html
 
-![image-20210413152646004](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413152646004.png)
+截图：
 
-#### 迭代过程图
+![image-20210502134034568](README_image/image-20210502134034568.png)
 
-![image-20210413152801304](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413152801304.png)
+#### 直线模式：(用时: 0.3629秒)
 
-![image-20210413152855198](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413152855198.png)
+路径图：https://laorange.github.io/Modeling_and_Simulation2021/results/2dsr.html
 
-### 3维情况
+迭代图：https://laorange.github.io/Modeling_and_Simulation2021/results/2dss.html
 
-(0, 0, 0) → (80, 80, 80) : 用时 532.22秒
+截图：
 
-#### 障碍物布局
+![image-20210502141701795](README_image/image-20210502141701795.png)
+
+-----
+
+### 3d情况
 
 ```python
-if y == 20 - x and z < 60:
+# 以下情况为障碍物
+if x - y == 15 and z < 15:
     OBSTACLE = True
-if y == 60 - x and 70 <= z <= 90:
+if x - y == 15 and 15 <= z <= 20 and x <= 25:
     OBSTACLE = True
-if x + y + z == 160 and 40 <= x <= 60 and 40 <= y <= 60 and 40 <= z <= 80:
+if x == 25 and z > 5 and y >= 10:
+    OBSTACLE = True
+if z == 20 and y < 25 and x <= 25:
+    OBSTACLE = True
+if z == 10 and y > 10 and x >= 20:
+    OBSTACLE = True
+if y == 25 and x < 20 and z <= 20:
+    OBSTACLE = True
+if y == 25 and 5 <= x <= 15 and z >= 20:
+    OBSTACLE = True
+if y == 10 and 15 <= x <= 25 and z >= 20:
+    OBSTACLE = True
+if x == 15 and 10 <= y < 25 and z > 5:
+    OBSTACLE = True
+if x == 15 and 5 <= y < 10 and z > 20:
+    OBSTACLE = True
+if x + y == 15 and z < 15:
     OBSTACLE = True
 ```
 
-![image-20210413153548200](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413153548200.png)
+#### 对角线模式：(用时: 600.2027秒)
 
-![image-20210413154016518](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413154016518.png)
+路径图：https://laorange.github.io/Modeling_and_Simulation2021/results/3dor.html
 
-#### 路径图
+迭代图：https://laorange.github.io/Modeling_and_Simulation2021/results/3dos.html
 
-![image-20210413154320967](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413154320967.png)
+截图：
 
-![image-20210413154459927](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413154459927.png)
+![image-20210502142330915](README_image/image-20210502142330915.png)
 
-![image-20210413154609073](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413154609073.png)
+#### 直线模式：(用时: 130.0591秒)
 
-#### 迭代过程图
+路径图：https://laorange.github.io/Modeling_and_Simulation2021/results/3dsr.html
 
-![image-20210413154733328](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413154733328.png)
+迭代图：https://laorange.github.io/Modeling_and_Simulation2021/results/3dss.html
 
-![image-20210413154750230](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413154750230.png)
+截图：
 
-![image-20210413154854911](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413154854911.png)
+![image-20210502142749636](README_image/image-20210502142749636.png)
 
-![image-20210413155013934](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210413155013934.png)
+-------
 
-## 其他说明
+## 总截图
 
-v1.7以后，地图默认大小改为20×20
-
-下图的识别仅需0.15秒
-
-![image-20210414093516055](https://gitee.com/laorange/Modeling_and_Simulation2021/raw/main/README_image/image-20210414093516055.png)
+![image-time](README_image/time.png)

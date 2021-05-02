@@ -20,32 +20,70 @@ def this_point_is_an_obstacle(x: int, y: int, z: int):
     OBSTACLE = False
     # TODO: ↓ 在下方定义 2d 的障碍
     if not opt.use_3d:
-        if x > 10 and y == 50 - x:
+        if x == 2 and y in [6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20, 21, 25, 26, 27, 28]:
             OBSTACLE = True
-        if x < 50 and y == 60 - x:
+        if x == 5 and y in [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 25, 26, 27, 28]:
             OBSTACLE = True
-        if x > 40 and y == 70 - x:
+        if x == 9 and y in [2, 6, 9, 13, 18, 21, 22, 23, 24, 25, 28, 29, 30]:
             OBSTACLE = True
-        if x == 50 and y > 40:
+        if x == 10 and y == 14:
             OBSTACLE = True
-        if x == 40 and 30 <= y < 80:
+        if x == 12 and y in [9, 12, 15, 18, 19, 20, 21, 25]:
             OBSTACLE = True
-        if 60 <= x <= 70 and y == 120 - x:
+        if x == 15 and y in [2, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 21, 22, 23, 24, 25, 28]:
             OBSTACLE = True
-        if 50 <= x <= 70 and y == 140 - x:
+        if x == 18 and y in [2, 3, 4, 5, 6, 7, 8, 9, 12, 13, 14, 15, 18, 21, 22, 23, 24, 25, 26, 27, 28]:
             OBSTACLE = True
-        if x == 70 and 50 <= y <= 70:
+        if x == 22 and y in [2, 3, 4, 5, 6, 9, 10, 11, 12, 15, 18, 19, 20, 21, 25, 26, 27, 28]:
             OBSTACLE = True
+        if x == 25 and y in [0, 1, 2, 6, 7, 8, 9, 12, 15, 16, 17, 18, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]:
+            OBSTACLE = True
+        if x == 28 and y in [2, 3, 4, 5, 6, 9, 10, 11, 12, 15, 18, 21, 22, 23, 24, 25, 26, 27, 28]:
+            OBSTACLE = True
+        if y == 2 and x in [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 22, 23, 24, 25, 26, 27, 28]:
+            OBSTACLE = True
+        if y == 6 and x in [0, 1, 2, 5, 9, 10, 11, 12, 13, 14, 15, 18]:
+            OBSTACLE = True
+        if y == 9 and x in [6, 7, 8, 9, 10, 11, 12, 19, 20, 21, 23, 24, 26, 27, 28]:
+            OBSTACLE = True
+        if y == 12 and x in [13, 14, 15, 16, 17, 22, 23, 24, 25]:
+            OBSTACLE = True
+        if y == 15 and x in [3, 4, 11, 12, 13, 14, 19, 20, 21, 22, 23, 24, 28, 29, 30]:
+            OBSTACLE = True
+        if y == 18 and x in [6, 7, 8, 10, 11, 12, 16, 17, 18, 19, 20, 21, 22, 26, 27, 28, 29, 30]:
+            OBSTACLE = True
+        if y == 21 and x in [3, 4, 10, 11, 16, 17, 18, 22, 23, 24]:
+            OBSTACLE = True
+        if y == 25 and x in [0, 1, 10, 11, 12, 13, 14, 19, 20, 21, 22]:
+            OBSTACLE = True
+        if y == 28 and x in [6, 7, 8, 10, 11, 12, 15, 16, 17, 18, 22, 25, 29, 30]:
+            OBSTACLE = True
+
     # TODO: ↓ 在下方定义 3d 的障碍
     else:
-        if x == 20 and z < 30:
+        if x - y == 15 and z < 15:
             OBSTACLE = True
-        if z == 50 and y < 60:
+        if x - y == 15 and 15 <= z <= 20 and x <= 25:
             OBSTACLE = True
-        if y == 80 and x < 60:
+        if x == 25 and z > 5 and y >= 10:
             OBSTACLE = True
-        if x == 50 and 20 < y < 80 and z > 20:
+        if z == 20 and y < 25 and x <= 25:
             OBSTACLE = True
+        if z == 10 and y > 10 and x >= 20:
+            OBSTACLE = True
+        if y == 25 and x < 20 and z <= 20:
+            OBSTACLE = True
+        if y == 25 and 5 <= x <= 15 and z >= 20:
+            OBSTACLE = True
+        if y == 10 and 15 <= x <= 25 and z >= 20:
+            OBSTACLE = True
+        if x == 15 and 10 <= y < 25 and z > 5:
+            OBSTACLE = True
+        if x == 15 and 5 <= y < 10 and z > 20:
+            OBSTACLE = True
+        if x + y == 15 and z < 15:
+            OBSTACLE = True
+
     return OBSTACLE
 
 
@@ -231,20 +269,22 @@ def prepare_before_iterate(start_point: OperationalPoint):
 
 if __name__ == '__main__':
     start_time = perf_counter()  # 记录开始时间
+    count = 100
+    break_point_time = start_time
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--use-3d', action='store_true', help='维度是否为3维')
     parser.add_argument('--debug', action='store_true', help='调试模式，可查看障碍物&起点终点位置')
     parser.add_argument('--straight', action='store_true', help='是否按直线行进（即不能沿对角线方向移动）')
-    parser.add_argument('--map-x', nargs='?', type=int, default=100, metavar='int', help='地图长度')
-    parser.add_argument('--map-y', nargs='?', type=int, default=100, metavar='int', help='地图宽度')
-    parser.add_argument('--map-z', nargs='?', type=int, default=100, metavar='int', help='地图高度')
+    parser.add_argument('--map-x', nargs='?', type=int, default=30, metavar='int', help='地图长度')
+    parser.add_argument('--map-y', nargs='?', type=int, default=30, metavar='int', help='地图宽度')
+    parser.add_argument('--map-z', nargs='?', type=int, default=30, metavar='int', help='地图高度')
     parser.add_argument('--start-x', nargs='?', type=int, default=0, metavar='int', help='起点x轴坐标')
     parser.add_argument('--start-y', nargs='?', type=int, default=0, metavar='int', help='起点y轴坐标')
     parser.add_argument('--start-z', nargs='?', type=int, default=0, metavar='int', help='起点z轴坐标')
-    parser.add_argument('--end-x', nargs='?', type=int, default=80, metavar='int', help='终点x轴坐标')
-    parser.add_argument('--end-y', nargs='?', type=int, default=80, metavar='int', help='终点y轴坐标')
-    parser.add_argument('--end-z', nargs='?', type=int, default=80, metavar='int', help='终点z轴坐标')
+    parser.add_argument('--end-x', nargs='?', type=int, default=30, metavar='int', help='终点x轴坐标')
+    parser.add_argument('--end-y', nargs='?', type=int, default=30, metavar='int', help='终点y轴坐标')
+    parser.add_argument('--end-z', nargs='?', type=int, default=30, metavar='int', help='终点z轴坐标')
     opt = parser.parse_args()
 
     if not opt.use_3d and opt.start_z != opt.end_z:
@@ -265,17 +305,21 @@ if __name__ == '__main__':
         prepare_before_iterate(start_point=best_point)
 
     while not REACH_THE_DESTINATION:
+        count += 1
         best_point = determine_best_point()
         new_operational_point = OperationalPoint(best_point.x, best_point.y, best_point.z,
                                                  best_point.g, best_point.route)
         progress = 1 - new_operational_point.h / starting_h
-        print("\r当前位置({}, {}, {})，有效路程 ÷ 始末点距离: {:.2f}%".format(new_operational_point.x,
-                                                                new_operational_point.y,
-                                                                new_operational_point.z,
-                                                                100 * progress), end='')
+        if count // 100:
+            print("\r当前位置({}, {}, {})，迭代速度：{:.2f}轮/秒，有效路程: {:.2f}%".format(new_operational_point.x,
+                                                                           new_operational_point.y,
+                                                                           new_operational_point.z,
+                                                                           100 / (perf_counter() - break_point_time),
+                                                                           100 * progress), end='')
+            break_point_time = perf_counter()
+            count = 0
         new_operational_point.iterate_one_time()
 
-    route = best_point.route
     print("\n用时: {:.4f}秒".format(perf_counter() - start_time))
 
     if not opt.debug:
