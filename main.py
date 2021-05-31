@@ -5,11 +5,12 @@ import argparse
 from pandas import DataFrame
 import plotly
 import plotly.express as px
+from numba import jit
 
 # 全局变量
-computed_points = []
-computed_points_lists = []
-computed_points_f = []
+open_points = []
+open_points_lists = []
+open_points_f = []
 closed_points_lists = []
 obstacle_points = []
 exceptions = []  # 该列表记录遇障情况，默认不输出
@@ -103,7 +104,7 @@ class Point:
             if not opt.straight:
                 self.h = ((opt.end_x - self.x) ** 2 + (opt.end_y - self.y) ** 2) ** 0.5
 
-        self.f = self.g + 1.5 * self.h  # 提高h的占比，使得在原本f相同时，取h小的点
+        self.f = 0.999 * self.g + 1 * self.h  # 略微降低g的占比，使得在原本f相同时，取h更小的点
         self.t = g if t == 0 else t  # t: 默认值为g, 数值越大颜色越鲜艳
         self.route = route_input if route_input is not None else []  # 从终点到该点的路径
         self.close = False  # 是否close
@@ -162,15 +163,15 @@ class OperationalPoint(Point):
                 new_route = self.route[:]
                 new_route.append([self.x, self.y, self.z])
                 new_point = Point(new_coordinate['x'], new_coordinate['y'], new_coordinate['z'], g_new, new_route)
-                if new_point.to_list() not in computed_points_lists:
-                    computed_points_lists.append(new_point.to_list())
-                    computed_points.append(new_point)
-                    computed_points_f.append(new_point.f)
+                if new_point.to_list() not in open_points_lists:
+                    open_points_lists.append(new_point.to_list())
+                    open_points.append(new_point)
+                    open_points_f.append(new_point.f)
                 else:
-                    new_point_index = computed_points_lists.index(new_point.to_list())
-                    if computed_points[new_point_index].g > new_point.g:
-                        computed_points[new_point_index] = new_point
-                        computed_points_f[new_point_index] = new_point.f
+                    new_point_index = open_points_lists.index(new_point.to_list())
+                    if open_points[new_point_index].g > new_point.g:
+                        open_points[new_point_index] = new_point
+                        open_points_f[new_point_index] = new_point.f
                         if new_point.to_list() in closed_points_lists:
                             closed_points_lists.remove(new_point.to_list())
         except Exception as e:
@@ -199,11 +200,11 @@ class OperationalPoint(Point):
 def determine_best_point() -> Point:
     global REACH_THE_DESTINATION
     MAX_DISTANCE_ON_THE_MAP = (opt.map_x + opt.map_y + opt.map_z) * 10
-    if computed_points:
-        min_f = min(computed_points_f[::-1])
+    if open_points:
+        min_f = min(open_points_f[::-1])
         ALL_CLOSED = False if min_f <= MAX_DISTANCE_ON_THE_MAP else True
-        index_min_f = len(computed_points_f) - computed_points_f[::-1].index(min_f) - 1
-        temp_best_point = computed_points[index_min_f]
+        index_min_f = len(open_points_f) - open_points_f[::-1].index(min_f) - 1
+        temp_best_point = open_points[index_min_f]
         if ALL_CLOSED:
             REACH_THE_DESTINATION = True
             print("未到达终点，但已遍历所有情况")
@@ -217,8 +218,8 @@ def determine_best_point() -> Point:
             assert not temp_best_point.close
             if not REACH_THE_DESTINATION:
                 closed_points_lists.append(temp_best_point.to_list())
-                computed_points[index_min_f].be_closed()
-                computed_points_f[index_min_f] += MAX_DISTANCE_ON_THE_MAP
+                open_points[index_min_f].be_closed()
+                open_points_f[index_min_f] += MAX_DISTANCE_ON_THE_MAP
         else:
             REACH_THE_DESTINATION = True
             print("未到达终点，但出错了")
@@ -250,21 +251,33 @@ def visualize(route_mode: bool, last_point: Point):
             x_ls.append(last_best_point.x)
             y_ls.append(last_best_point.y)
             z_ls.append(last_best_point.z)
+
+    # if opt.use_3d:
     for obstacle_point in obstacle_points:
         t_ls.append(-100)
         x_ls.append(obstacle_point[0])
         y_ls.append(obstacle_point[1])
         z_ls.append(obstacle_point[2])
+    # else:
+    #     for t in t_ls:
+    #         for obstacle_point in obstacle_points:
+    #             t_ls.append(t)
+    #             x_ls.append(obstacle_point[0])
+    #             y_ls.append(obstacle_point[1])
+                # z_ls.append(opt.start_z)
 
     data = DataFrame({'x': x_ls, 'y': y_ls, 'z': z_ls, 'step': t_ls})
+    # if opt.use_3d:
     fig = px.scatter_3d(data, x='x', y='y', z='z', color='step')
+    # else:
+    #     fig = plotly.express.scatter(data, x='x', y='y', animation_frame='step')
     plotly.offline.plot(fig, filename=f"{'result_route' if route_mode else 'result_scan'}.html")
 
 
 def prepare_before_iterate(start_point: OperationalPoint):
-    computed_points_lists.append(start_point.to_list())
-    computed_points.append(start_point)
-    computed_points_f.append(start_point.f)
+    open_points_lists.append(start_point.to_list())
+    open_points.append(start_point)
+    open_points_f.append(start_point.f)
 
 
 if __name__ == '__main__':
