@@ -18,57 +18,23 @@ exceptions = []  # 该列表记录遇障情况，默认不输出
 
 
 # TODO: 在此处设置障碍物的位置
-def this_point_is_an_obstacle(x: int, y: int, z: int):
+def this_point_is_valid_or_raise_error(x: int, y: int, z: int):
     OBSTACLE = False
     # TODO: ↓ 在下方定义 2d 的障碍
     if not opt.use_3d:
-        # if x + y == 30 and 5 < x < 20:
-        #     OBSTACLE = True
-        if x == 2 and y in [6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20, 21, 25, 26, 27, 28]:
-            OBSTACLE = True
-        if x == 5 and y in [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 25, 26, 27, 28]:
-            OBSTACLE = True
-        if x == 9 and y in [2, 6, 9, 13, 18, 21, 22, 23, 24, 25, 28, 29, 30]:
-            OBSTACLE = True
-        if x == 10 and y == 14:
-            OBSTACLE = True
-        if x == 12 and y in [9, 12, 15, 18, 19, 20, 21, 25]:
-            OBSTACLE = True
-        if x == 15 and y in [2, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 21, 22, 23, 24, 25, 28]:
-            OBSTACLE = True
-        if x == 18 and y in [2, 3, 4, 5, 6, 7, 8, 9, 12, 13, 14, 15, 18, 21, 22, 23, 24, 25, 26, 27, 28]:
-            OBSTACLE = True
-        if x == 22 and y in [2, 3, 4, 5, 6, 9, 10, 11, 12, 15, 18, 19, 20, 21, 25, 26, 27, 28]:
-            OBSTACLE = True
-        if x == 25 and y in [0, 1, 2, 6, 7, 8, 9, 12, 15, 16, 17, 18, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]:
-            OBSTACLE = True
-        if x == 28 and y in [2, 3, 4, 5, 6, 9, 10, 11, 12, 15, 18, 21, 22, 23, 24, 25, 26, 27, 28]:
-            OBSTACLE = True
-        if y == 2 and x in [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 22, 23, 24, 25, 26, 27, 28]:
-            OBSTACLE = True
-        if y == 6 and x in [0, 1, 2, 5, 9, 10, 11, 12, 13, 14, 15, 18]:
-            OBSTACLE = True
-        if y == 9 and x in [6, 7, 8, 9, 10, 11, 12, 19, 20, 21, 23, 24, 26, 27, 28]:
-            OBSTACLE = True
-        if y == 12 and x in [13, 14, 15, 16, 17, 22, 23, 24, 25]:
-            OBSTACLE = True
-        if y == 15 and x in [3, 4, 11, 12, 13, 14, 19, 20, 21, 22, 23, 24, 28, 29, 30]:
-            OBSTACLE = True
-        if y == 18 and x in [6, 7, 8, 10, 11, 12, 16, 17, 18, 19, 20, 21, 22, 26, 27, 28, 29, 30]:
-            OBSTACLE = True
-        if y == 21 and x in [3, 4, 10, 11, 16, 17, 18, 22, 23, 24]:
-            OBSTACLE = True
-        if y == 25 and x in [0, 1, 10, 11, 12, 13, 14, 19, 20, 21, 22]:
-            OBSTACLE = True
-        if y == 28 and x in [6, 7, 8, 10, 11, 12, 15, 16, 17, 18, 22, 25, 29, 30]:
+        if x + y == 30 and 5 < x < 20:
             OBSTACLE = True
 
     # TODO: ↓ 在下方定义 3d 的障碍
     else:
-        if 19 <= x + y <= 20 and x > 5 and y > 5 and 5 < z < 15:
+        # 请注意：3d极其容易导致最终图中的点过多，导致画图失败。建议变更地图大小后再使用3d功能/或变更3d画法，参考v1.9
+        if 19 <= x + y <= 20 and x > 6 and y > 6 and 8 < z < 15:
             OBSTACLE = True
 
-    return OBSTACLE
+    if OBSTACLE:
+        raise Exception(f"({x}, {y}, {z})，遇到障碍物")
+    if x < 0 or x > opt.map_x or y < 0 or y > opt.map_y or z > opt.map_z or z < 0:
+        raise Exception(f"({x}, {y}, {z})，超出边界")
 
 
 class Point:
@@ -87,7 +53,7 @@ class Point:
             if not opt.straight:
                 self.h = ((opt.end_x - self.x) ** 2 + (opt.end_y - self.y) ** 2) ** 0.5
 
-        self.f = 1 * self.g + 1 * self.h
+        self.f = 0.99 * self.g + 1 * self.h  # 略调小g占比，使在f相同时取h更小的值
         self.t = g if t == 0 else t  # t: 默认值为g, 数值越大颜色越鲜艳
         self.route = route_input if route_input is not None else []  # 从终点到该点的路径
         self.close = False  # 是否close
@@ -106,11 +72,15 @@ def record_all_obstacle_on_the_map():
         for y in range(opt.map_y + 1):
             if opt.use_3d:
                 for z in range(opt.map_z + 1):
-                    if this_point_is_an_obstacle(x, y, z):
+                    try:
+                        this_point_is_valid_or_raise_error(x, y, z)
+                    except:
                         obstacle_points.append([x, y, z])
             else:
                 z = opt.start_z
-                if this_point_is_an_obstacle(x, y, z):
+                try:
+                    this_point_is_valid_or_raise_error(x, y, z)
+                except:
                     obstacle_points.append([x, y, z])
     if not opt.use_3d:  # 2维图画出边界
         for x in range(- 1, opt.map_x + 2):
@@ -132,32 +102,25 @@ class OperationalPoint(Point):
                     change = -1 if ("-" + axis_name) in axis else 1
                     new_coordinate[axis_name] += change
                     from_where[axis_name] += change
-                    if not this_point_is_an_obstacle(from_where['x'], from_where['y'], from_where['z']):
-                        distance += 1
-                    else:
-                        raise Exception(f"({from_where['x']}, {from_where['y']}, {from_where['z']})，遇到障碍物")
-            if new_coordinate['x'] > opt.map_x or new_coordinate['x'] < 0 or new_coordinate['y'] > opt.map_y or \
-                    new_coordinate['y'] < 0 or new_coordinate['z'] > opt.map_z or new_coordinate['z'] < 0:
-                raise Exception(f"({new_coordinate['x']}, {new_coordinate['y']}, {new_coordinate['z']})，超出边界")
+                    this_point_is_valid_or_raise_error(from_where['x'], from_where['y'], from_where['z'])
+                    distance += 1
+            g_new = self.g + distance ** 0.5
+            this_point_is_valid_or_raise_error(new_coordinate['x'], new_coordinate['y'], new_coordinate['z'])
+            new_route = self.route[:]
+            new_route.append([self.x, self.y, self.z])
+            new_point = Point(new_coordinate['x'], new_coordinate['y'], new_coordinate['z'], g_new, new_route)
+            if new_point.to_list() not in open_points_lists:
+                open_points_lists.append(new_point.to_list())
+                open_points_recorder[-1].append(new_point.to_list())
+                open_points.append(new_point)
+                open_points_f.append(new_point.f)
             else:
-                g_new = self.g + distance ** 0.5
-                if this_point_is_an_obstacle(new_coordinate['x'], new_coordinate['y'], new_coordinate['z']):
-                    raise Exception(f"({new_coordinate['x']}, {new_coordinate['y']}, {new_coordinate['z']})，遇到障碍物")
-                new_route = self.route[:]
-                new_route.append([self.x, self.y, self.z])
-                new_point = Point(new_coordinate['x'], new_coordinate['y'], new_coordinate['z'], g_new, new_route)
-                if new_point.to_list() not in open_points_lists:
-                    open_points_lists.append(new_point.to_list())
-                    open_points_recorder[-1].append(new_point.to_list())
-                    open_points.append(new_point)
-                    open_points_f.append(new_point.f)
-                else:
-                    new_point_index = open_points_lists.index(new_point.to_list())
-                    if open_points[new_point_index].g > new_point.g:
-                        open_points[new_point_index] = new_point
-                        open_points_f[new_point_index] = new_point.f
-                        if new_point.to_list() in closed_points_lists:
-                            closed_points_lists.remove(new_point.to_list())
+                new_point_index = open_points_lists.index(new_point.to_list())
+                if open_points[new_point_index].g > new_point.g:
+                    open_points[new_point_index] = new_point
+                    open_points_f[new_point_index] = new_point.f
+                    if new_point.to_list() in closed_points_lists:
+                        closed_points_lists.remove(new_point.to_list())
         except Exception as e:
             exceptions.append(e)  # 添加遇障信息
 
@@ -165,15 +128,14 @@ class OperationalPoint(Point):
         threads = []
         open_points_recorder.append([])
         if opt.use_3d:  # 3d 情况
-            axis_list = ["x", "y", "z", "-x", "-y", "-z"]
-            if not opt.straight:
-                axis_list = ["x", "y", "z", "-x", "-y", "-z", 'xy', 'xz', 'yz', '-xy',
-                             '-xz', '-yz', 'x-y', 'x-z', 'y-z', '-x-y', '-x-z', '-y-z',
-                             "xyz", "-xyz", "x-yz", "xy-z", "-x-yz", "-xy-z", "x-y-z", "-x-y-z"]
+            axis_list = ["x", "y", "z", "-x", "-y", "-z", 'xy', 'xz', 'yz', '-xy', '-xz', '-yz', 'x-y', 'x-z', 'y-z',
+                         '-x-y', '-x-z', '-y-z', "xyz", "-xyz", "x-yz", "xy-z", "-x-yz", "-xy-z", "x-y-z", "-x-y-z"]
+            if opt.straight:
+                axis_list = ["x", "y", "z", "-x", "-y", "-z"]
         else:  # 2d 情况
-            axis_list = ["x", "y", "-x", "-y"]
-            if not opt.straight:
-                axis_list = ["x", "y", "-x", "-y", 'xy', '-xy', 'x-y', '-x-y']
+            axis_list = ["x", "y", "-x", "-y", 'xy', '-xy', 'x-y', '-x-y']
+            if opt.straight:
+                axis_list = ["x", "y", "-x", "-y"]
         while axis_list:
             axis = axis_list.pop(randint(0, len(axis_list) - 1))
             task = Thread(target=self.move, args=[axis])  # 多线程加速计算
@@ -200,7 +162,6 @@ def determine_best_point() -> Point:
                 if temp_best_point.z == opt.end_z:
                     REACH_THE_DESTINATION = True  # 到达终点
         if temp_best_point.to_list() not in closed_points_lists:
-            assert not temp_best_point.close
             if not REACH_THE_DESTINATION:
                 closed_points_lists.append(temp_best_point.to_list())
                 open_points[index_min_f].be_closed()
@@ -212,15 +173,13 @@ def determine_best_point() -> Point:
 
 
 # 使用plotly进行可视化
-def visualize(last_point: Point):  # last_point: Point, route_mode: bool = True
+def visualize(last_point: Point):
     t_ls = []  # step
     c_ls = []  # color
     x_ls = []
     y_ls = []
     z_ls = []
-
     final_recorder = [step for step in open_points_recorder if step]
-
     step_len = len(final_recorder)
     for step in tqdm(final_recorder):
         step_num = final_recorder.index(step) + 1
@@ -236,7 +195,6 @@ def visualize(last_point: Point):  # last_point: Point, route_mode: bool = True
         x_ls.append(opt.end_x)
         y_ls.append(opt.end_y)
         z_ls.append(opt.end_z)
-
     last_best_point = last_point
     routes = last_best_point.route
     if routes:
@@ -251,7 +209,6 @@ def visualize(last_point: Point):  # last_point: Point, route_mode: bool = True
         x_ls.append(last_best_point.x)
         y_ls.append(last_best_point.y)
         z_ls.append(last_best_point.z)
-
     t_ls_route = list(set(t_ls[:]))
     for t in tqdm(t_ls_route):
         for obstacle_point in obstacle_points:
@@ -260,9 +217,8 @@ def visualize(last_point: Point):  # last_point: Point, route_mode: bool = True
             x_ls.append(obstacle_point[0])
             y_ls.append(obstacle_point[1])
             z_ls.append(obstacle_point[2])
-
     data = DataFrame({'x': x_ls, 'y': y_ls, 'z': z_ls, 'step': t_ls, 'color': c_ls})
-    print("共计{}个点，现在开始画图，预计需要{:.0f}秒".format(len(x_ls), 2.0 + len(x_ls) * 2e-05))
+    print("共计{}个点，现在开始画图，预计需要{}秒".format(len(x_ls), int(2.0 + len(x_ls) * 2e-05) if len(x_ls) < 1e7 else '∞'))
     start_time_draw = perf_counter()
     fig = px.scatter_3d(data, x='x', y='y', z='z', animation_frame='step', color='color')
     plotly.offline.plot(fig, filename=f"output.html")
@@ -277,10 +233,6 @@ def prepare_before_iterate(start_point: OperationalPoint):
 
 
 if __name__ == '__main__':
-    start_time = perf_counter()  # 记录开始时间
-    count = 100
-    break_point_time = start_time
-
     parser = argparse.ArgumentParser()
     parser.add_argument('--use-3d', action='store_true', help='维度是否为3维')
     parser.add_argument('--debug', action='store_true', help='调试模式，可查看障碍物&起点终点位置')
@@ -300,13 +252,13 @@ if __name__ == '__main__':
         opt.end_z = opt.start_z
         print("2维模式下，起点和终点的Z轴坐标必须相同，已自动将终点位置的z轴坐标设为与起点相同")
 
+    record_all_obstacle_on_the_map()
+
     REACH_THE_DESTINATION = opt.debug
     if REACH_THE_DESTINATION:
         print("当前为调试模式，可查看障碍物&起点终点位置")
         closed_points_lists.append([opt.start_x, opt.start_y, opt.start_z])
         closed_points_lists.append([opt.end_x, opt.end_y, opt.end_z])
-
-    record_all_obstacle_on_the_map()
 
     best_point = OperationalPoint(opt.start_x, opt.start_y, opt.start_z)  # 初始点
     starting_h = best_point.h
@@ -316,6 +268,9 @@ if __name__ == '__main__':
         open_points_recorder.append([best_point.to_list()])
         open_points_recorder.append([[opt.end_x, opt.end_y, opt.end_z]])
 
+    start_time = perf_counter()  # 记录开始时间
+    count = 100
+    break_point_time = start_time
     while not REACH_THE_DESTINATION:
         try:
             count += 1
@@ -335,8 +290,5 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             print('中断')
             break
-
     print("\n用时: {:.4f}秒".format(perf_counter() - start_time))
-
     visualize(last_point=best_point)
-    # input('\n请敲击回车来结束程序:')

@@ -1,8 +1,6 @@
-Modeling_and_Simulation2021
-
 # 使用A*算法的最短路径优化设计
 
-> 2021.4 建模与仿真
+> 2021.4 - 2021.6 建模与仿真
 
 **使用python实现**
 
@@ -37,67 +35,13 @@ Modeling_and_Simulation2021
 
 ### 2d情况
 
-```python
-# 以下情况为障碍物
-if x == 2 and y in [2, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20, 21, 25, 26, 27, 28]:
-    OBSTACLE = True
-if x == 5 and y in [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 25, 26, 27, 28]:
-    OBSTACLE = True
-if x == 9 and y in [2, 6, 9, 13, 18, 21, 22, 23, 24, 25, 28, 29, 30]:
-    OBSTACLE = True
-if x == 10 and y == 14:
-    OBSTACLE = True
-if x == 12 and y in [9, 12, 15, 18, 19, 20, 21, 25]:
-    OBSTACLE = True
-if x == 15 and y in [2, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 21, 22, 23, 24, 25, 28]:
-    OBSTACLE = True
-if x == 18 and y in [2, 3, 4, 5, 6, 7, 8, 9, 12, 13, 14, 15, 18, 21, 22, 23, 24, 25, 26, 27, 28]:
-    OBSTACLE = True
-if x == 22 and y in [2, 3, 4, 5, 6, 9, 10, 11, 12, 15, 18, 19, 20, 21, 25, 26, 27, 28]:
-    OBSTACLE = True
-if x == 25 and y in [0, 1, 2, 6, 7, 8, 9, 12, 15, 16, 17, 18, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]:
-    OBSTACLE = True
-if x == 28 and y in [2, 3, 4, 5, 6, 9, 10, 11, 12, 15, 18, 21, 22, 23, 24, 25, 26, 27, 28]:
-    OBSTACLE = True
-if y == 2 and x in [3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 22, 23, 24, 25, 26, 27, 28]:
-    OBSTACLE = True
-if y == 6 and x in [0, 1, 2, 5, 9, 10, 11, 12, 13, 14, 15, 18]:
-    OBSTACLE = True
-if y == 9 and x in [6, 7, 8, 9, 10, 11, 12, 19, 20, 21, 23, 24, 26, 27, 28]:
-    OBSTACLE = True
-if y == 12 and x in [13, 14, 15, 16, 17, 22, 23, 24, 25]:
-    OBSTACLE = True
-if y == 15 and x in [3, 4, 11, 12, 13, 14, 19, 20, 21, 22, 23, 24, 28, 29, 30]:
-    OBSTACLE = True
-if y == 18 and x in [6, 7, 8, 10, 11, 12, 16, 17, 18, 19, 20, 21, 22, 26, 27, 28, 29, 30]:
-    OBSTACLE = True
-if y == 21 and x in [3, 4, 10, 11, 16, 17, 18, 22, 23, 24]:
-    OBSTACLE = True
-if y == 25 and x in [0, 1, 10, 11, 12, 13, 14, 19, 20, 21, 22]:
-    OBSTACLE = True
-if y == 28 and x in [6, 7, 8, 10, 11, 12, 15, 16, 17, 18, 22, 25, 29, 30]:
-    OBSTACLE = True
-```
+#### 对角线模式：(用时: 0.6947秒) 
 
-#### 对角线模式：(用时: 0.6947秒)
-
-路径图：https://laorange.github.io/Modeling_and_Simulation2021/results/2dor.html
-
-迭代图：https://laorange.github.io/Modeling_and_Simulation2021/results/2dos.html
-
-截图：
-
-![image-20210502134034568](README_image/image-20210502134034568.png)
+![oCam_2021_06_01_14_52_25_742](README_image/oCam_2021_06_01_14_52_25_742.gif)
 
 #### 直线模式：(用时: 0.3629秒)
 
-路径图：https://laorange.github.io/Modeling_and_Simulation2021/results/2dsr.html
-
-迭代图：https://laorange.github.io/Modeling_and_Simulation2021/results/2dss.html
-
-截图：
-
-![image-20210502141701795](README_image/image-20210502141701795.png)
+![oCam_2021_06_01_15_07_19_417](README_image/oCam_2021_06_01_15_07_19_417.gif)
 
 -----
 
@@ -131,21 +75,13 @@ if x + y == 15 and z < 15:
 
 #### 对角线模式：(用时: 600.2027秒)
 
-路径图：https://laorange.github.io/Modeling_and_Simulation2021/results/3dor.html
-
-迭代图：https://laorange.github.io/Modeling_and_Simulation2021/results/3dos.html
-
-截图：
+原文件请在 ``results/v1静态结果示例.zip`` 中查看
 
 ![image-20210502142330915](README_image/image-20210502142330915.png)
 
 #### 直线模式：(用时: 130.0591秒)
 
-路径图：https://laorange.github.io/Modeling_and_Simulation2021/results/3dsr.html
-
-迭代图：https://laorange.github.io/Modeling_and_Simulation2021/results/3dss.html
-
-截图：
+原文件请在 ``results/v1静态结果示例.zip`` 中查看
 
 ![image-20210502142749636](README_image/image-20210502142749636.png)
 
