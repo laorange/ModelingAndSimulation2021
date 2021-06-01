@@ -8,7 +8,7 @@
 
 **开源授权协议: AGPL-3.0 License**
 
-[源代码](/laorange/Modeling_and_Simulation2021/blob/main/main.py)、[更新日志](/laorange/Modeling_and_Simulation2021/blob/main/log.md)、[GitHub](https://github.com/laorange/Modeling_and_Simulation2021)、[Gitee](https://gitee.com/laorange/Modeling_and_Simulation2021)
+[源代码](https://github.com/laorange/Modeling_and_Simulation2021/blob/main/main.py)、[更新日志](https://github.com/laorange/Modeling_and_Simulation2021/blob/main/README.md)、[GitHub](https://github.com/laorange/Modeling_and_Simulation2021)、[Gitee](https://gitee.com/laorange/Modeling_and_Simulation2021)
 
 ## 使用说明
 
