@@ -33,6 +33,17 @@
 
 ## 示例
 
+### 查看示例
+
+文件较大，网页加载可能会比较慢
+
+| 示例列表                                                     |
+| ------------------------------------------------------------ |
+| [2D 对角线模式](https://laorange.github.io/Modeling_and_Simulation2021/2d_%E6%96%9C%E7%BA%BF%E6%A8%A1%E5%BC%8F.html) |
+| [2D 直线模式](https://laorange.github.io/Modeling_and_Simulation2021/2d_%E7%9B%B4%E7%BA%BF%E6%A8%A1%E5%BC%8F.html) |
+| [3D 对角线模式](https://laorange.github.io/Modeling_and_Simulation2021/3d_%E6%96%9C%E7%BA%BF%E6%A8%A1%E5%BC%8F.html) |
+| [3D 直线模式](https://laorange.github.io/Modeling_and_Simulation2021/3d_%E7%9B%B4%E7%BA%BF%E6%A8%A1%E5%BC%8F.html) |
+
 ### 2d情况
 
 #### 对角线模式：(用时: 0.6947秒) 
